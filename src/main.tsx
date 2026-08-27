@@ -1,6 +1,7 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import Routes from './routes.tsx'
+import './GameRoutes.css'
 
 // Aplica o tema salvo antes do React montar (evita flash)
 (() => {
