@@ -17,19 +17,20 @@ function higienizarTitulo(str) {
 async function rodarAutomacaoDiaria() {
   try {
     console.log("Iniciando sorteio diário de cinema via API TMDB (com Axios)...");
-    const hoje = new Date().toISOString().split('T')[0]; // Crava o índice 0 da data
+    const hoje = new Date().toISOString().split('T')[0]; // Garante o fuso limpo e o índice exato
 
     const configuracaoAxios = {
       headers: {
         accept: 'application/json',
-        Authorization: `Bearer ${tmdbToken.trim()}`
+        Authorization: 'Bearer ' + tmdbToken.trim()
       }
     };
 
     // 1. SORTEIO REAL: Busca uma página aleatória de filmes populares do TMDB
     const paginaAleatoria = Math.floor(Math.random() * 10) + 1; 
-    // Correção da URL utilizando crases e o cifrão corretamente
-    const urlTMDB = `https://themoviedb.org{paginaAleatoria}`;
+    
+    // Concatenação tradicional com sinal de mais (+) para garantir que o Git interprete sem erros
+    const urlTMDB = 'https://api.themoviedb.org/3/discover/movie?include_adult=false&language=pt-BR&sort_by=popularity.desc&vote_average.gte=6&vote_count.gte=850&page={paginaAleatoria}';
     
     const respostaTMDB = await axios.get(urlTMDB, configuracaoAxios);
     const dadosTMDB = respostaTMDB.data;
@@ -52,11 +53,11 @@ async function rodarAutomacaoDiaria() {
     const filmeSorteado = filmesElegiveis[Math.floor(Math.random() * filmesElegiveis.length)];
 
     // 3. Busca detalhes extras do filme (para pegar estúdios)
-    const urlDetalhes = `https://themoviedb.org{filmeSorteado.id}?language=pt-BR`;
+    const urlDetalhes = 'https://themoviedb.org' + filmeSorteado.id + '?language=pt-BR';
     const respostaDetalhes = await axios.get(urlDetalhes, configuracaoAxios);
     const detalhes = respostaDetalhes.data;
 
-    // Correção segura para acessar o nome do primeiro estúdio da lista
+    // Acessa o nome do primeiro estúdio da lista com segurança array
     const estudioNome = detalhes.production_companies && detalhes.production_companies.length > 0
       ? detalhes.production_companies[0].name 
       : 'Independente';
@@ -72,7 +73,7 @@ async function rodarAutomacaoDiaria() {
       title_brazil: higienizarTitulo(filmeSorteado.title),
       studio: estudioNome,
       categories: categoriesLista,
-      poster_url: filmeSorteado.poster_path ? `https://tmdb.org{filmeSorteado.poster_path}` : ''
+      poster_url: filmeSorteado.poster_path ? 'https://tmdb.org' + filmeSorteado.poster_path : ''
     };
 
     // 5. Salva de forma blindada no Supabase
@@ -87,7 +88,7 @@ async function rodarAutomacaoDiaria() {
         throw error;
       }
     } else {
-      console.log(`Sucesso Absoluto! Desafio '${novoDesafioDiario.title_brazil}' salvo para ${hoje}.`);
+      console.log('Sucesso Absoluto! Desafio ' + novoDesafioDiario.title_brazil + ' salvo para ' + hoje + '.');
     }
 
   } catch (err) {
