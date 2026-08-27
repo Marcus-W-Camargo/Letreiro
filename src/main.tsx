@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
-import App from './App.tsx'
+import Routes from './routes.tsx'
 
 // Aplica o tema salvo antes do React montar (evita flash)
 (() => {
@@ -21,6 +21,6 @@ if (!rootElement) {
 
 createRoot(rootElement).render(
   <StrictMode>
-    <App />
+    <Routes />
   </StrictMode>,
 )
