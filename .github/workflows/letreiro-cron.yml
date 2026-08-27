@@ -17,7 +17,7 @@ jobs:
       - name: Instalando o Ambiente Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Instalando Dependências do Banco
         run: npm install @supabase/supabase-js axios
