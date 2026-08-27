@@ -1,35 +1,49 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-const tmdbApiKey = process.env.TMDB_API_KEY;
+const tmdbToken = process.env.TMDB_API_KEY; // Seu Token de Acesso de Leitura da API (Bearer Token)
 
-// Função auxiliar para remover acentos e caracteres especiais (igual ao seu sistema)
 function higienizarTitulo(str) {
+  if (!str) return '';
   return str
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // Remove acentos
-    .replace(/[^a-zA-Z\s]/g, "")    // Remove números e símbolos, mantém letras e espaços
+    .replace(/[\u0300-\u036f]/g, "") 
+    .replace(/[^a-zA-Z\s]/g, "")    
     .toUpperCase()
     .trim();
 }
 
 async function rodarAutomacaoDiaria() {
   try {
-    console.log("Iniciando sorteio diário de cinema via API...");
+    console.log("Iniciando sorteio diário de cinema via API TMDB...");
     const hoje = new Date().toISOString().split('T')[0];
 
+    // Configuração dos cabeçalhos de segurança exigidos pelo TMDB no ambiente de servidor
+    const opcoesFetch = {
+      method: 'GET',
+      headers: {
+        accept: 'application/json',
+        Authorization: `Bearer ${tmdbToken.trim()}` // Envia o token limpando espaços residuais
+      }
+    };
+
     // 1. SORTEIO REAL: Busca uma página aleatória de filmes populares do TMDB
-    const paginaAleatoria = Math.floor(Math.random() * 10) + 1; // Páginas 1 a 10
-    const urlTMDB = `https://themoviedb.org{tmdbApiKey}&language=pt-BR&page=${paginaAleatoria}`;
+    const paginaAleatoria = Math.floor(Math.random() * 10) + 1; 
+    const urlTMDB = `https://themoviedb.org{paginaAleatoria}`;
     
-    const respostaTMDB = await fetch(urlTMDB);
+    const respostaTMDB = await fetch(urlTMDB, opcoesFetch);
+    
+    if (!respostaTMDB.ok) {
+      throw new Error(`Erro na API do TMDB: Status ${respostaTMDB.status}`);
+    }
+    
     const dadosTMDB = await respostaTMDB.json();
 
     if (!dadosTMDB.results || dadosTMDB.results.length === 0) {
-      throw new Error("Falha ao puxar filmes do TMDB.");
+      throw new Error("Nenhum filme foi retornado na resposta do TMDB.");
     }
 
-    // 2. Filtra apenas os filmes que possuem título utilizável (sem números no título traduzido)
+    // 2. Filtra apenas os filmes que possuem título utilizável (sem números no título)
     const filmesElegiveis = dadosTMDB.results.filter(filme => {
       const temNumero = /\d/.test(filme.title);
       return !temNumero && filme.title.trim().length > 0;
@@ -42,12 +56,12 @@ async function rodarAutomacaoDiaria() {
     // Sorteia um dos filmes elegíveis da lista
     const filmeSorteado = filmesElegiveis[Math.floor(Math.random() * filmesElegiveis.length)];
 
-    // 3. Busca detalhes extras do filme (como os estúdios produtores)
-    const urlDetalhes = `https://themoviedb.org{filmeSorteado.id}?api_key=${tmdbApiKey}&language=pt-BR`;
-    const respostaDetalhes = await fetch(urlDetalhes);
+    // 3. Busca detalhes extras do filme (para pegar estúdios)
+    const urlDetalhes = `https://themoviedb.org{filmeSorteado.id}?language=pt-BR`;
+    const respostaDetalhes = await fetch(urlDetalhes, opcoesFetch);
     const detalhes = await respostaDetalhes.json();
 
-    const estúdioNome = detalhes.production_companies?.[0]?.name || 'Independente';
+    const estudioNome = detalhes.production_companies?.[0]?.name || 'Independente';
     const categoriasLista = detalhes.genres?.map(g => g.name) || ['Cinema'];
 
     // 4. Estrutura o objeto final idêntico ao esperado pelo Letreiro
@@ -55,7 +69,7 @@ async function rodarAutomacaoDiaria() {
       release_date: hoje,
       tmdb_id: filmeSorteado.id,
       title_brazil: higienizarTitulo(filmeSorteado.title),
-      studio: estúdioNome,
+      studio: estudioNome,
       categories: categoriasLista,
       poster_url: filmeSorteado.poster_path ? `https://tmdb.org{filmeSorteado.poster_path}` : ''
     };
@@ -67,12 +81,12 @@ async function rodarAutomacaoDiaria() {
 
     if (error) {
       if (error.code === '23505') {
-        console.log("O filme de hoje já foi inserido anteriormente.");
+        console.log("O filme de hoje já foi inserido anteriormente no banco.");
       } else {
         throw error;
       }
     } else {
-      console.log(`Sucesso! Desafio '${novoDesafioDiario.title_brazil}' salvo para ${hoje}.`);
+      console.log(`Sucesso Absoluto! Desafio '${novoDesafioDiario.title_brazil}' salvo para ${hoje}.`);
     }
 
   } catch (err) {
