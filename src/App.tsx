@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useMovimentacao } from './useMovimentacao'
 import { useDicionario } from './useDicionario'
-import { useFilmeTMDB } from './useFilmeTMDB'
+import { supabase } from './supabaseClient'
 import type { LetrasDigitadas, EstruturaPalavra } from './useMovimentacao'
 import './App.css'
 
@@ -23,6 +23,12 @@ interface DicasAbertas {
   capa: boolean;
 }
 
+interface InfoFilmeSupabase {
+  estudio: string;
+  genero: string;
+  posterUrl: string;
+}
+
 function obterTemaInicial(): Tema {
   if (typeof window === 'undefined') return 'dark';
   const salvo = localStorage.getItem('letreiro-tema');
@@ -34,7 +40,10 @@ function App() {
   // ==========================================
   // ESTADOS PRINCIPAIS DO JOGO
   // ==========================================
-  const { filmeDoDia, carregandoFilme, infoFilme } = useFilmeTMDB();
+  const [filmeDoDia, setFilmeDoDia] = useState<string>('');
+  const [carregandoFilme, setCarregandoFilme] = useState<boolean>(true);
+  const [infoFilme, setInfoFilme] = useState<InfoFilmeSupabase>({ estudio: '', genero: '', posterUrl: '' });
+  
   const [statusTeclado, setStatusTeclado] = useState<StatusTeclado>({});
   const [tentativasAnteriores, setTentativasAnteriores] = useState<Tentativa[]>([]);
   const [jogoGanhou, setJogoGanhou] = useState(false);
@@ -55,7 +64,6 @@ function App() {
     (dicasAbertas.estudio ? 1 : 0) +
     (dicasAbertas.genero ? 1 : 0) +
     (dicasAbertas.capa ? 1 : 0);
-
   const abrirDica = (tipo: TipoDica) => {
     setDicasAbertas((prev) => {
       if (prev[tipo]) return prev;
@@ -78,7 +86,6 @@ function App() {
     } else if (numTentativas <= 6 && numDicas > 0) {
       return "Muito Bom!";
     } else {
-      // Alterna aleatoriamente só para não ficar repetitivo
       return Math.random() < 0.5 ? "Espetacular!" : "Sensacional!";
     }
   };
@@ -98,6 +105,40 @@ function App() {
 
   const { dicionarioBr, carregandoDicionario } = useDicionario();
 
+  // Ciclo de leitura puramente estático e centralizado do Supabase
+  useEffect(() => {
+    async function carregarFilmeSalvo() {
+      try {
+        setCarregandoFilme(true);
+        const hoje = new Date().toISOString().split('T')[0];
+
+        const { data, error: erroBanco } = await supabase
+          .from('daily_movies')
+          .select('title_brazil, studio, categories, poster_url')
+          .eq('release_date', hoje)
+          .maybeSingle();
+
+        if (erroBanco) throw erroBanco;
+
+        if (data) {
+          setFilmeDoDia(data.title_brazil);
+          setInfoFilme({
+            estudio: data.studio || 'Não informado',
+            genero: Array.isArray(data.categories) ? data.categories.join(', ') : (data.categories || 'Não informado'),
+            posterUrl: data.poster_url || ''
+          });
+        } else {
+          console.warn(`Nenhum desafio cadastrado no Supabase para a data de hoje: ${hoje}`);
+        }
+      } catch (err) {
+        console.error('Erro ao ler filme estático do dia:', err);
+      } finally {
+        setCarregandoFilme(false);
+      }
+    }
+    carregarFilmeSalvo();
+  }, []);
+
   // Aplica o tema no documento e salva a preferência
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', tema);
@@ -107,7 +148,6 @@ function App() {
   const alternarTema = () => {
     setTema(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
-
   // Registro estável para o listener ler os estados em tempo real sem closures congeladas
   const dadosAtuaisRef = useRef<{
     letrasDigitadas: LetrasDigitadas;
@@ -141,7 +181,6 @@ function App() {
   useEffect(() => {
     if (!filmeNormalizado || totalCaracteres === 0) return;
 
-    // Novo filme carregado → permite reinicializar o cursor
     if (filmeNormalizado !== filmeAnteriorRef.current) {
       filmeAnteriorRef.current = filmeNormalizado;
       cursorInicializadoRef.current = false;
@@ -152,7 +191,6 @@ function App() {
       cursorInicializadoRef.current = true;
     }
 
-    // Adiciona as palavras do filme ao dicionário (cópia, sem mutar o Set do state)
     if (dicionarioBr && dicionarioBr.size > 0) {
       const palavrasDoFilme = filmeNormalizado.split(" ");
       palavrasDoFilme.forEach(palavra => {
@@ -197,7 +235,6 @@ function App() {
     window.addEventListener("keydown", escutarTecladoFisico);
     return () => window.removeEventListener("keydown", escutarTecladoFisico);
   }, [carregandoDicionario, carregandoFilme, removerAcentos]);
-
   const obterEstruturaPalavras = (): EstruturaPalavra[] => {
     if (!filmeDoDia) return [];
     const palavras = filmeDoDia.split(" ");
@@ -210,7 +247,7 @@ function App() {
     });
   };
 
-  const linhasTeclado: string[][] = [
+  const linesTeclado: string[][] = [
     ["Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"],
     ["A", "S", "D", "F", "G", "H", "J", "K", "L"],
     ["Z", "X", "C", "V", "B", "N", "M", "BACKSPACE"],
@@ -225,7 +262,6 @@ function App() {
     const estruturaPalavras = obterEstruturaPalavras();
     const listaPalavrasFilme = filmeNormalizado.split(" ");
 
-    // 1. Estoque Geral Primário de Letras Ocultas (Filme Inteiro)
     const estoqueFilmeTotal: Record<string, number> = {};
     for (const char of filmeNormalizado) {
       if (char !== " ") {
@@ -233,7 +269,6 @@ function App() {
       }
     }
 
-    // Agrupar os índices numéricos por bloco de palavra de forma limpa
     const indicesPorPalavra: Record<number, number[]> = {};
     for (let idxGlobal = 0; idxGlobal < totalCaracteres; idxGlobal++) {
       if (filmeNormalizado[idxGlobal] === " ") continue;
@@ -249,9 +284,7 @@ function App() {
       indicesPorPalavra[palavraIdx].push(idxGlobal);
     }
 
-    // ==========================================
     // PASSE 1: Mapear Estritamente Todos os VERDES (Posição Correta)
-    // ==========================================
     Object.keys(indicesPorPalavra).forEach((pKey) => {
       const indicesGlobaisDaPalavra = indicesPorPalavra[Number(pKey)];
       const palavraAlvo = listaPalavrasFilme[Number(pKey)];
@@ -268,9 +301,7 @@ function App() {
       });
     });
 
-    // ==========================================
     // PASSE 2: Mapear os AMARELOS (Respeitando Estoque da Palavra Local)
-    // ==========================================
     const estoquesPalavrasLocais: Record<number, Record<string, number>> = {};
     Object.keys(indicesPorPalavra).forEach((pKey) => {
       const palavraAlvo = listaPalavrasFilme[Number(pKey)];
@@ -285,12 +316,11 @@ function App() {
         }
       }
     });
-
     Object.keys(indicesPorPalavra).forEach((pKey) => {
       const indicesGlobaisDaPalavra = indicesPorPalavra[Number(pKey)];
 
       indicesGlobaisDaPalavra.forEach((idxGlobal) => {
-        if (coresDestaTentativa[idxGlobal]) return; // Pula se já for Verde
+        if (coresDestaTentativa[idxGlobal]) return;
 
         const letraDigitada = letrasAtuais[idxGlobal];
         const estoqueLocal = estoquesPalavrasLocais[Number(pKey)];
@@ -303,14 +333,12 @@ function App() {
       });
     });
 
-    // ==========================================
     // PASSE 3: Mapear os ROXOS (Filme) e CINZAS (Esgotados) nos Excedentes
-    // ==========================================
     Object.keys(indicesPorPalavra).forEach((pKey) => {
       const indicesGlobaisDaPalavra = indicesPorPalavra[Number(pKey)];
 
       indicesGlobaisDaPalavra.forEach((idxGlobal) => {
-        if (coresDestaTentativa[idxGlobal]) return; // Pula se já for Verde ou Amarelo
+        if (coresDestaTentativa[idxGlobal]) return;
 
         const letraDigitada = letrasAtuais[idxGlobal];
 
@@ -323,7 +351,6 @@ function App() {
       });
     });
 
-    // Atualizar as cores das teclas do Teclado Virtual/Físico com base na hierarquia
     Object.values(coresDestaTentativa).forEach((resultado) => {
       const { letra, cor } = resultado;
       const corAtualTeclado = novoStatusTeclado[letra];
@@ -341,7 +368,6 @@ function App() {
 
     const ganhou = Object.values(coresDestaTentativa).every(item => item.cor === "verde");
     if (ganhou) {
-      // +1 porque a tentativa vencedora ainda está sendo adicionada neste mesmo ciclo
       const totalTentativas = tentativasAnteriores.length + 1;
       setTituloVitoria(obterTituloVitoria(totalTentativas, contadorDicas));
       setJogoGanhou(true);
@@ -396,9 +422,7 @@ function App() {
           return;
         }
       }
-
       processarCoresDoPalpite(letrasAtuais);
-
     } else if (tecla === "ARROWLEFT") {
       setCursorAtual(prev => obterIndiceAnteriorValido(prev));
     } else if (tecla === "ARROWRIGHT") {
@@ -413,9 +437,7 @@ function App() {
     }
   };
 
-  // Mantém a ref sempre com a versão mais recente da função
   lidarComTeclaRef.current = lidarComTecla;
-
   const renderizarPalavrasDoFilme = (dadosLetras: LetrasDigitadas | Tentativa, modoHistorico = false) => {
     if (!filmeDoDia) return null;
     let indiceGlobalAcumulado = 0;
@@ -450,7 +472,6 @@ function App() {
           })}
         </div>
       );
-
       indiceGlobalAcumulado++; 
       return blocoPalavra;
     });
@@ -460,7 +481,7 @@ function App() {
     return (
       <div className="jogo-container" style={{justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>
         <h2>🎬 Letreiro</h2>
-        <p style={{color: 'var(--lt-texto-suave)'}}>Buscando filme do dia na API do TMDB...</p>
+        <p style={{color: 'var(--lt-texto-suave)'}}>Sincronizando desafio diário com o Supabase...</p>
       </div>
     );
   }
@@ -468,219 +489,91 @@ function App() {
   return (
     <>
       {jogoGanhou && mostrarModalVitoria && (
-        <div
-          className="modal-overlay"
-          onClick={() => setMostrarModalVitoria(false)}
-          role="presentation"
-        >
-          <div
-            className="modal-conteudo modal-conteudo-vitoria"
-            onClick={(e) => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="titulo-vitoria"
-          >
+        <div className="modal-overlay" onClick={() => setMostrarModalVitoria(false)} role="presentation">
+          <div className="modal-conteudo modal-conteudo-vitoria" onClick={(e) => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="titulo-vitoria">
             <div className="modal-trofeu">
               <span className="modal-trofeu-icone">🏆</span>
               <span className="modal-trofeu-filme">🎬</span>
             </div>
-
             {infoFilme.posterUrl && (
               <div className="modal-poster-limpo">
-                <img
-                  src={infoFilme.posterUrl}
-                  alt="Capa do filme"
-                  className="modal-poster-img"
-                />
+                <img src={infoFilme.posterUrl} alt="Capa do filme" className="modal-poster-img" />
               </div>
             )}
-
             <h2 id="titulo-vitoria" className="modal-titulo-vitoria">{tituloVitoria}</h2>
             <p className="modal-texto-vitoria">
-              Você acertou o filme em{' '}
-              <strong className="modal-destaque">
-                {tentativasAnteriores.length}
-              </strong>{' '}
-              {tentativasAnteriores.length === 1 ? 'tentativa' : 'tentativas'}
+              Você acertou o filme em <strong className="modal-destaque">{tentativasAnteriores.length}</strong> {tentativasAnteriores.length === 1 ? 'tentativa' : 'tentativas'}
               {contadorDicas > 0 ? (
-                <>
-                  {' '}e usou{' '}
-                  <strong className="modal-destaque-dica">{contadorDicas}</strong>{' '}
-                  {contadorDicas === 1 ? 'dica' : 'dicas'}
-                </>
+                <> e usou <strong className="modal-destaque-dica">{contadorDicas}</strong> {contadorDicas === 1 ? 'dica' : 'dicas'}</>
               ) : (
                 <> sem usar dicas</>
-              )}
-              !
+              )}!
             </p>
-            <div className="modal-rodape">
-              <p>Obrigado por jogar o Letreiro!🎬</p>
-            </div>
-            <button
-              type="button"
-              className="btn-fechar-vitoria"
-              onClick={() => setMostrarModalVitoria(false)}
-            >
-              Ver tentativas
-            </button>
+            <div className="modal-rodape"><p>Obrigado por jogar o Letreiro!🎬</p></div>
+            <button type="button" className="btn-fechar-vitoria" onClick={() => setMostrarModalVitoria(false)}>Ver tentativas</button>
           </div>
         </div>
       )}
 
       <div className="jogo-container">
         <header className="site-header">
-          <button
-            type="button"
-            className="btn-header btn-dicas"
-            onClick={() => setMenuDicasAberto((v) => !v)}
-            title="Abrir dicas"
-            aria-label="Abrir menu de dicas"
-            aria-expanded={menuDicasAberto}
-          >
-            💡
-            {contadorDicas > 0 && (
-              <span className="btn-dicas-badge">{contadorDicas}</span>
-            )}
+          <button type="button" className="btn-header btn-dicas" onClick={() => setMenuDicasAberto((v) => !v)} title="Abrir dicas" aria-label="Abrir menu de dicas" aria-expanded={menuDicasAberto}>
+            💡{contadorDicas > 0 && <span className="btn-dicas-badge">{contadorDicas}</span>}
           </button>
-
-          <div className="site-header-titulo">
-            <span className="site-header-emoji">🎬</span>
-            <h1>Letreiro</h1>
-          </div>
-
-          <button
-            type="button"
-            className="btn-header btn-tema"
-            onClick={alternarTema}
-            title={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
-            aria-label={tema === 'dark' ? 'Ativar tema claro' : 'Ativar tema escuro'}
-          >
+          <div className="site-header-titulo"><span className="site-header-emoji">🎬</span><h1>Letreiro</h1></div>
+          <button type="button" className="btn-header btn-tema" onClick={alternarTema} title={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
             {tema === 'dark' ? '☀️' : '🌙'}
           </button>
 
           {menuDicasAberto && (
             <div className="menu-dicas" role="menu">
               <p className="menu-dicas-titulo">Escolha uma dica</p>
-              <button
-                type="button"
-                className={`menu-dicas-item ${dicasAbertas.estudio ? 'ja-usada' : ''}`}
-                onClick={() => abrirDica('estudio')}
-                role="menuitem"
-              >
-                <span className="menu-dicas-nivel">Leve</span>
-                <span className="menu-dicas-desc">
-                  {dicasAbertas.estudio ? infoFilme.estudio : 'Estúdio'}
-                </span>
+              <button type="button" className={`menu-dicas-item ${dicasAbertas.estudio ? 'ja-usada' : ''}`} onClick={() => abrirDica('estudio')} role="menuitem">
+                <span className="menu-dicas-nivel">Leve</span><span className="menu-dicas-desc">{dicasAbertas.estudio ? infoFilme.estudio : 'Estúdio'}</span>
               </button>
-              <button
-                type="button"
-                className={`menu-dicas-item ${dicasAbertas.genero ? 'ja-usada' : ''}`}
-                onClick={() => abrirDica('genero')}
-                role="menuitem"
-              >
-                <span className="menu-dicas-nivel">Média</span>
-                <span className="menu-dicas-desc">
-                  {dicasAbertas.genero ? infoFilme.genero : 'Gênero'}
-                </span>
+              <button type="button" className={`menu-dicas-item ${dicasAbertas.genero ? 'ja-usada' : ''}`} onClick={() => abrirDica('genero')} role="menuitem">
+                <span className="menu-dicas-nivel">Média</span><span className="menu-dicas-desc">{dicasAbertas.genero ? infoFilme.genero : 'Gênero'}</span>
               </button>
-              <button
-                type="button"
-                className={`menu-dicas-item ${dicasAbertas.capa ? 'ja-usada' : ''}`}
-                onClick={() => abrirDica('capa')}
-                role="menuitem"
-                disabled={!infoFilme.posterUrl}
-              >
-                <span className="menu-dicas-nivel">Forte</span>
-                <span className="menu-dicas-desc">
-                  {dicasAbertas.capa ? 'Capa (com blur)' : 'Poster'}
-                </span>
+              <button type="button" className={`menu-dicas-item ${dicasAbertas.capa ? 'ja-usada' : ''}`} onClick={() => abrirDica('capa')} role="menuitem" disabled={!infoFilme.posterUrl}>
+                <span className="menu-dicas-nivel">Forte</span><span className="menu-dicas-desc">{dicasAbertas.capa ? 'Capa (com blur)' : 'Poster'}</span>
               </button>
-              <button
-                type="button"
-                className="menu-dicas-fechar"
-                onClick={() => setMenuDicasAberto(false)}
-              >
-                Fechar
-              </button>
+              <button type="button" className="menu-dicas-fechar" onClick={() => setMenuDicasAberto(false)}>Fechar</button>
             </div>
           )}
         </header>
 
-        {/* Painel da dica ativa (texto ou capa borrada) */}
         {dicaAtiva && !jogoGanhou && (
           <div className={`painel-dica painel-dica-${dicaAtiva}`}>
-            {dicaAtiva === 'estudio' && (
-              <>
-                <span className="painel-dica-label">Dica leve — Estúdio</span>
-                <span className="painel-dica-valor">{infoFilme.estudio}</span>
-              </>
-            )}
-            {dicaAtiva === 'genero' && (
-              <>
-                <span className="painel-dica-label">Dica média — Categoria</span>
-                <span className="painel-dica-valor">{infoFilme.genero}</span>
-              </>
-            )}
+            {dicaAtiva === 'estudio' && (<><span className="painel-dica-label">Dica leve — Estúdio</span><span className="painel-dica-valor">{infoFilme.estudio}</span></>)}
+            {dicaAtiva === 'genero' && (<><span className="painel-dica-label">Dica média — Categoria</span><span className="painel-dica-valor">{infoFilme.genero}</span></>)}
             {dicaAtiva === 'capa' && infoFilme.posterUrl && (
-              <>
-                <span className="painel-dica-label">Dica forte — Capa</span>
-                <div className="poster-blur-card">
-                  <img
-                    src={infoFilme.posterUrl}
-                    alt="Capa do filme com blur"
-                    className="poster-blur-img"
-                  />
-                </div>
-              </>
+              <><span className="painel-dica-label">Dica forte — Capa</span><div className="poster-blur-card"><img src={infoFilme.posterUrl} alt="Capa com blur" className="poster-blur-img" /></div></>
             )}
-            <button
-              type="button"
-              className="painel-dica-ocultar"
-              onClick={() => setDicaAtiva(null)}
-              title="Ocultar dica"
-            >
-              ✕
-            </button>
+            <button type="button" className="painel-dica-ocultar" onClick={() => setDicaAtiva(null)}>✕</button>
           </div>
         )}
 
         <main className="tabuleiro">
           <div className={`filme-container palpite-atual-fixado${jogoGanhou ? ' palpite-vitoria' : ''}`}>
             {jogoGanhou ? (
-              <button
-                type="button"
-                className="btn-trofeu-palpite"
-                onClick={() => setMostrarModalVitoria(true)}
-                title="Ver tela de vitória"
-                aria-label="Reabrir tela de vitória"
-              >
-                <span className="btn-trofeu-icone">🏆</span>
-                <span className="btn-trofeu-texto">Vitória — Volte amanhã para outro filme!🎬</span>
+              <button type="button" className="btn-trofeu-palpite" onClick={() => setMostrarModalVitoria(true)}>
+                <span className="btn-trofeu-icone">🏆</span><span className="btn-trofeu-texto">Vitória — Volte amanhã para outro filme!🎬</span>
               </button>
-            ) : (
-              renderizarPalavrasDoFilme(letrasDigitadas, false)
-            )}
+            ) : (renderizarPalavrasDoFilme(letrasDigitadas, false))}
           </div>
           
           <div className="historico-container">
             {[...tentativasAnteriores].reverse().map((tentativa, idxTentativa) => (
-              <div key={idxTentativa} className="filme-container historico-linha-bloco">
-                {renderizarPalavrasDoFilme(tentativa, true)}
-              </div>
+              <div key={idxTentativa} className="filme-container historico-linha-bloco">{renderizarPalavrasDoFilme(tentativa, true)}</div>
             ))}
           </div>
         </main>
 
         <footer className="teclado-container teclado-fixado-bottom">
-          {linhasTeclado.map((linha, indexLinha) => (
+          {linesTeclado.map((linha, indexLinha) => (
             <div key={indexLinha} className="teclado-linha">
               {linha.map((tecla) => (
-                <button
-                  key={tecla}
-                  disabled={carregandoDicionario}
-                  className={`tecla ${statusTeclado[tecla] || ""} ${tecla === 'ENTER' ? 'tecla-enter' : ''} ${tecla === 'BACKSPACE' ? 'tecla-backspace' : ''}`}
-                  onClick={() => lidarComTecla(tecla)}
-                >
+                <button key={tecla} disabled={carregandoDicionario} className={`tecla ${statusTeclado[tecla] || ""} ${tecla === 'ENTER' ? 'tecla-enter' : ''} ${tecla === 'BACKSPACE' ? 'tecla-backspace' : ''}`} onClick={() => lidarComTecla(tecla)}>
                   {tecla === "BACKSPACE" ? "⌫" : tecla}
                 </button>
               ))}
