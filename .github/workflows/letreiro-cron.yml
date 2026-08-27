@@ -20,7 +20,7 @@ jobs:
           node-size: 20
 
       - name: Instalando Dependências do Banco
-        run: npm install @supabase/supabase-js
+        run: npm install @supabase/supabase-js axios
 
       - name: Executando Script de Sorteio do TMDB
         env:
