@@ -36,6 +36,8 @@ async function buscarFilmesJaUsados() {
     const { data, error } = await supabase
       .from('daily_movies')
       .select('tmdb_id, title_brazil')
+      .order('release_date', { ascending: true })
+      .order('tmdb_id', { ascending: true })
       .range(inicio, inicio + TAMANHO_PAGINA_BANCO - 1);
 
     if (error) {
