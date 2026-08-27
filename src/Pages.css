@@ -10,60 +10,91 @@
 
 .pagina-header {
   width: 100%;
-  min-height: 72px;
-  padding: 14px 18px;
+  max-width: 600px;
+  min-height: 65px;
+  margin: 0 auto;
+  padding: 12px 16px;
   box-sizing: border-box;
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   border-bottom: 1px solid var(--lt-header-borda);
+  flex-shrink: 0;
 }
 
 .pagina-marca {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center;
+  gap: 8px;
   font-weight: 800;
 }
 
+.pagina-header .pagina-marca {
+  grid-column: 2;
+}
+
 .pagina-marca-icone {
-  font-size: 1.55rem;
+  font-size: 1.6rem;
   line-height: 1;
 }
 
 .pagina-marca-nome {
   font-size: 1.6rem;
-  letter-spacing: -0.03em;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
 
 .pagina-tema {
-  width: 42px;
-  height: 42px;
-  border: 1px solid var(--lt-header-borda);
-  border-radius: 12px;
-  background: var(--lt-superficie);
+  grid-column: 3;
+  justify-self: end;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--lt-tecla);
   color: var(--lt-texto);
-  font-size: 1.05rem;
+  font-size: 1.2rem;
   cursor: pointer;
-  transition: transform 0.15s ease, background-color 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px var(--lt-sombra);
+  transition: background-color 0.2s ease, transform 0.1s ease;
 }
 
 .pagina-tema:hover {
-  transform: translateY(-1px);
-  background: var(--lt-tecla);
+  background: var(--lt-tecla-acao);
+}
+
+.pagina-tema:active {
+  transform: scale(0.95);
 }
 
 .pagina-inicial-conteudo {
   flex: 1;
   width: min(100%, 560px);
   margin: 0 auto;
-  padding: 24px 24px 16vh;
+  padding: 24px 24px 12vh;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   text-align: center;
+}
+
+.pagina-marca-destaque {
+  margin-bottom: 26px;
+}
+
+.pagina-marca-destaque .pagina-marca-icone {
+  font-size: clamp(2rem, 7vw, 2.7rem);
+}
+
+.pagina-marca-destaque .pagina-marca-nome {
+  font-size: clamp(2rem, 7vw, 2.7rem);
+  letter-spacing: 0.5px;
 }
 
 .pagina-apresentacao {
@@ -99,6 +130,15 @@
   gap: 10px;
 }
 
+.btn-seta {
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 9px solid currentColor;
+  margin-left: 2px;
+}
+
 .btn-letreiro-dia:hover,
 .btn-ir-calendario:hover {
   transform: translateY(-2px);
@@ -125,27 +165,28 @@
 
 .calendario-conteudo {
   flex: 1;
-  width: min(100%, 680px);
+  width: min(100%, 720px);
   margin: 0 auto;
-  padding: 28px 20px 34px;
+  padding: 30px 18px 36px;
   box-sizing: border-box;
   overflow-y: auto;
 }
 
 .calendario-titulos {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 32px;
 }
 
 .calendario-titulos h1 {
   margin: 0;
-  font-size: clamp(1.55rem, 5vw, 2rem);
+  font-size: clamp(1.7rem, 5.5vw, 2.25rem);
   letter-spacing: -0.035em;
 }
 
 .calendario-titulos p {
-  margin: 8px 0 0;
+  margin: 9px 0 0;
   color: var(--lt-texto-suave);
+  font-size: clamp(0.95rem, 3vw, 1.08rem);
   font-weight: 700;
   text-transform: capitalize;
 }
@@ -158,15 +199,15 @@
 
 .calendario-semana {
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
   color: var(--lt-texto-suave);
-  font-size: 0.78rem;
+  font-size: 0.86rem;
   font-weight: 800;
   text-align: center;
 }
 
 .calendario-grade {
-  gap: 10px 8px;
+  gap: 12px 8px;
 }
 
 .calendario-vazio {
@@ -176,7 +217,7 @@
 .claquete-dia {
   --claquete-cor: var(--lt-tecla);
   min-width: 0;
-  aspect-ratio: 0.92;
+  aspect-ratio: 0.94;
   padding: 0;
   border: 0;
   background: transparent;
@@ -219,7 +260,7 @@
 
 .claquete-topo {
   height: 25%;
-  min-height: 14px;
+  min-height: 15px;
   border-radius: 7px 7px 2px 2px;
   background: var(--claquete-cor);
   display: grid;
@@ -244,7 +285,7 @@
   margin-top: 3px;
   border-radius: 3px 3px 8px 8px;
   background: var(--claquete-cor);
-  padding: 12%;
+  padding: 11%;
   box-sizing: border-box;
   display: flex;
 }
@@ -258,18 +299,18 @@
   align-items: center;
   justify-content: center;
   font-weight: 900;
-  font-size: clamp(0.86rem, 3.8vw, 1.2rem);
+  font-size: clamp(1rem, 4.2vw, 1.35rem);
   line-height: 1;
 }
 
 .calendario-legenda {
-  margin-top: 28px;
+  margin-top: 32px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
+  gap: 22px;
   color: var(--lt-texto-suave);
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 700;
 }
 
@@ -322,6 +363,26 @@
   line-height: 1.55;
 }
 
+.site-header-acoes {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  justify-self: start;
+}
+
+.btn-calendario {
+  font-size: 1.12rem;
+}
+
+.jogo-data-desafio {
+  margin: -1px 0 7px;
+  color: var(--lt-texto-suave);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+
 @media (max-width: 480px) {
   .pagina-header {
     min-height: 64px;
@@ -329,15 +390,33 @@
   }
 
   .pagina-marca-nome {
-    font-size: 1.4rem;
+    font-size: 1.45rem;
+  }
+
+  .pagina-marca-destaque {
+    margin-bottom: 24px;
+  }
+
+  .pagina-marca-destaque .pagina-marca-nome,
+  .pagina-marca-destaque .pagina-marca-icone {
+    font-size: 2.2rem;
   }
 
   .calendario-conteudo {
-    padding: 22px 12px 28px;
+    padding: 24px 6px 30px;
+  }
+
+  .calendario-titulos {
+    margin-bottom: 28px;
+  }
+
+  .calendario-semana {
+    gap: 3px;
+    font-size: 0.82rem;
   }
 
   .calendario-grade {
-    gap: 8px 5px;
+    gap: 10px 3px;
   }
 
   .claquete-topo {
@@ -345,7 +424,12 @@
     padding: 0 5px;
   }
 
+  .claquete-numero {
+    font-size: 1.05rem;
+  }
+
   .calendario-legenda {
-    gap: 14px;
+    gap: 16px;
+    margin-top: 30px;
   }
 }
