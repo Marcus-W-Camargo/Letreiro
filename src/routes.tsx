@@ -1,5 +1,11 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import App from './App'
+import {
+  chaveData,
+  dataLocalAtual,
+  dataParaRota,
+  interpretarDataDaRota,
+} from './dateUtils'
 import './Pages.css'
 
 type Tema = 'dark' | 'light'
@@ -32,47 +38,8 @@ function useTemaPagina() {
   }
 }
 
-function dataLocalAtual() {
-  const agora = new Date()
-  return new Date(agora.getFullYear(), agora.getMonth(), agora.getDate())
-}
-
-function chaveData(data: Date) {
-  const ano = data.getFullYear()
-  const mes = String(data.getMonth() + 1).padStart(2, '0')
-  const dia = String(data.getDate()).padStart(2, '0')
-  return `${ano}-${mes}-${dia}`
-}
-
-function dataParaRota(data: Date) {
-  const dia = String(data.getDate()).padStart(2, '0')
-  const mes = String(data.getMonth() + 1).padStart(2, '0')
-  const ano = String(data.getFullYear()).slice(-2)
-  return `${dia}-${mes}-${ano}`
-}
-
 function rotaDoDia(data: Date) {
   return `${PREFIXO}/${dataParaRota(data)}`
-}
-
-function interpretarDataDaRota(valor: string): Date | null {
-  const match = /^(\d{2})-(\d{2})-(\d{2})$/.exec(valor)
-  if (!match) return null
-
-  const dia = Number(match[1])
-  const mes = Number(match[2])
-  const ano = 2000 + Number(match[3])
-  const data = new Date(ano, mes - 1, dia)
-
-  if (
-    data.getFullYear() !== ano ||
-    data.getMonth() !== mes - 1 ||
-    data.getDate() !== dia
-  ) {
-    return null
-  }
-
-  return data
 }
 
 function obterStatusDia(data: Date): StatusDia {
@@ -100,15 +67,17 @@ function obterStatusDia(data: Date): StatusDia {
   return 'nao-jogado'
 }
 
-function CabecalhoPagina() {
+function CabecalhoPagina({ mostrarMarca = true }: { mostrarMarca?: boolean }) {
   const { tema, alternarTema } = useTemaPagina()
 
   return (
-    <header className="pagina-header">
-      <div className="pagina-marca" aria-label="Letreiro">
-        <span className="pagina-marca-icone">🎬</span>
-        <span className="pagina-marca-nome">Letreiro</span>
-      </div>
+    <header className={`pagina-header${mostrarMarca ? '' : ' pagina-header-sem-marca'}`}>
+      {mostrarMarca && (
+        <div className="pagina-marca" aria-label="Letreiro">
+          <span className="pagina-marca-icone">🎬</span>
+          <span className="pagina-marca-nome">Letreiro</span>
+        </div>
+      )}
       <button
         type="button"
         className="pagina-tema"
@@ -122,18 +91,28 @@ function CabecalhoPagina() {
   )
 }
 
+function MarcaDestaque() {
+  return (
+    <div className="pagina-marca pagina-marca-destaque" aria-label="Letreiro">
+      <span className="pagina-marca-icone">🎬</span>
+      <span className="pagina-marca-nome">Letreiro</span>
+    </div>
+  )
+}
+
 function PaginaInicial() {
   const hoje = dataLocalAtual()
 
   return (
     <div className="pagina-container pagina-inicial">
-      <CabecalhoPagina />
+      <CabecalhoPagina mostrarMarca={false} />
       <main className="pagina-inicial-conteudo">
+        <MarcaDestaque />
         <p className="pagina-apresentacao">Descubra o Letreiro do dia, letra por letra.</p>
         <button type="button" className="btn-letreiro-dia" onClick={() => navegar(rotaDoDia(hoje))}>
           <span aria-hidden="true">🎬</span>
           <span>Letreiro do dia</span>
-          <span aria-hidden="true">▶️</span>
+          <span className="btn-seta" aria-hidden="true" />
         </button>
         <button type="button" className="link-letreiros-anteriores" onClick={() => navegar(ROTA_CALENDARIO)}>
           Letreiros anteriores
@@ -238,6 +217,15 @@ function LetreiroNaoEncontrado() {
   )
 }
 
+function JogoRota({ data }: { data: Date }) {
+  const [desafioAusente, setDesafioAusente] = useState(false)
+  const marcarDesafioAusente = useCallback(() => setDesafioAusente(true), [])
+
+  if (desafioAusente) return <LetreiroNaoEncontrado />
+
+  return <App dataDesafio={data} onDesafioAusente={marcarDesafioAusente} />
+}
+
 function normalizarCaminho(caminho: string) {
   if (caminho.length > 1 && caminho.endsWith('/')) return caminho.slice(0, -1)
   return caminho
@@ -245,6 +233,11 @@ function normalizarCaminho(caminho: string) {
 
 export default function Routes() {
   const caminho = normalizarCaminho(window.location.pathname.toLowerCase())
+
+  if (caminho === '/') {
+    window.location.replace(PREFIXO)
+    return null
+  }
 
   if (caminho === PREFIXO) return <PaginaInicial />
   if (caminho === ROTA_CALENDARIO) return <Calendario />
@@ -256,7 +249,7 @@ export default function Routes() {
     const hoje = dataLocalAtual()
 
     if (data && data.getTime() <= hoje.getTime()) {
-      return <App />
+      return <JogoRota data={data} />
     }
   }
 
