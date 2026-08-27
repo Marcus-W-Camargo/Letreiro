@@ -34,6 +34,19 @@
   grid-column: 2;
 }
 
+.pagina-marca-link {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.pagina-marca-link:hover .pagina-marca-nome,
+.pagina-marca-link:focus-visible .pagina-marca-nome,
+.marca-jogo-link:hover h1,
+.marca-jogo-link:focus-visible h1 {
+  opacity: 0.78;
+}
+
 .pagina-marca-icone {
   font-size: 1.6rem;
   line-height: 1;
@@ -82,10 +95,16 @@
   justify-content: center;
   align-items: center;
   text-align: center;
+  position: relative;
 }
 
 .pagina-marca-destaque {
-  margin-bottom: 26px;
+  position: absolute;
+  top: clamp(72px, 13vh, 105px);
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  white-space: nowrap;
 }
 
 .pagina-marca-destaque .pagina-marca-icone {
@@ -230,6 +249,10 @@
   transition: transform 0.16s ease, opacity 0.2s ease, filter 0.2s ease;
 }
 
+[data-theme="light"] .claquete-dia.status-nao-jogado {
+  --claquete-cor: #afa188;
+}
+
 .claquete-dia:hover:not(:disabled) {
   transform: translateY(-3px);
 }
@@ -246,6 +269,10 @@
   opacity: 0.32;
   cursor: default;
   filter: grayscale(0.18);
+}
+
+[data-theme="light"] .claquete-dia.dia-futuro {
+  opacity: 0.46;
 }
 
 .claquete-dia.dia-atual::after {
@@ -374,6 +401,16 @@
   font-size: 1.12rem;
 }
 
+.marca-jogo-link {
+  cursor: pointer;
+  border-radius: 8px;
+  outline: none;
+}
+
+.marca-jogo-link:focus-visible {
+  box-shadow: 0 0 0 2px var(--lt-texto);
+}
+
 .jogo-data-desafio {
   margin: -1px 0 7px;
   color: var(--lt-texto-suave);
@@ -394,7 +431,8 @@
   }
 
   .pagina-marca-destaque {
-    margin-bottom: 24px;
+    top: clamp(70px, 12vh, 92px);
+    margin: 0;
   }
 
   .pagina-marca-destaque .pagina-marca-nome,
