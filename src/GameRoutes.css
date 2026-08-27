@@ -1,0 +1,19 @@
+.site-header {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.site-header-acoes {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.site-header > .site-header-titulo {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.site-header > .btn-tema {
+  grid-column: 3;
+  justify-self: end;
+}
