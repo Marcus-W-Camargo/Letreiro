@@ -1,7 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
+import axios from 'axios';
 
 const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-const tmdbToken = process.env.TMDB_API_KEY; // Seu Token de Acesso de Leitura da API (Bearer Token)
+const tmdbToken = process.env.TMDB_API_KEY;
 
 function higienizarTitulo(str) {
   if (!str) return '';
@@ -15,15 +16,14 @@ function higienizarTitulo(str) {
 
 async function rodarAutomacaoDiaria() {
   try {
-    console.log("Iniciando sorteio diário de cinema via API TMDB...");
+    console.log("Iniciando sorteio diário de cinema via API TMDB (com Axios)...");
     const hoje = new Date().toISOString().split('T')[0];
 
-    // Configuração dos cabeçalhos de segurança exigidos pelo TMDB no ambiente de servidor
-    const opcoesFetch = {
-      method: 'GET',
+    // Configuração de cabeçalhos de segurança do Axios
+    const configuracaoAxios = {
       headers: {
         accept: 'application/json',
-        Authorization: `Bearer ${tmdbToken.trim()}` // Envia o token limpando espaços residuais
+        Authorization: `Bearer ${tmdbToken.trim()}`
       }
     };
 
@@ -31,19 +31,14 @@ async function rodarAutomacaoDiaria() {
     const paginaAleatoria = Math.floor(Math.random() * 10) + 1; 
     const urlTMDB = `https://themoviedb.org{paginaAleatoria}`;
     
-    const respostaTMDB = await fetch(urlTMDB, opcoesFetch);
-    
-    if (!respostaTMDB.ok) {
-      throw new Error(`Erro na API do TMDB: Status ${respostaTMDB.status}`);
-    }
-    
-    const dadosTMDB = await respostaTMDB.json();
+    const respostaTMDB = await axios.get(urlTMDB, configuracaoAxios);
+    const dadosTMDB = respostaTMDB.data;
 
     if (!dadosTMDB.results || dadosTMDB.results.length === 0) {
       throw new Error("Nenhum filme foi retornado na resposta do TMDB.");
     }
 
-    // 2. Filtra apenas os filmes que possuem título utilizável (sem números no título)
+    // 2. Filtra apenas os filmes que possuem título utilizável (sem números)
     const filmesElegiveis = dadosTMDB.results.filter(filme => {
       const temNumero = /\d/.test(filme.title);
       return !temNumero && filme.title.trim().length > 0;
@@ -58,11 +53,17 @@ async function rodarAutomacaoDiaria() {
 
     // 3. Busca detalhes extras do filme (para pegar estúdios)
     const urlDetalhes = `https://themoviedb.org{filmeSorteado.id}?language=pt-BR`;
-    const respostaDetalhes = await fetch(urlDetalhes, opcoesFetch);
-    const detalhes = await respostaDetalhes.json();
+    const respostaDetalhes = await axios.get(urlDetalhes, configuracaoAxios);
+    const detalhes = respostaDetalhes.data;
 
-    const estudioNome = detalhes.production_companies?.[0]?.name || 'Independente';
-    const categoriasLista = detalhes.genres?.map(g => g.name) || ['Cinema'];
+    // Correção da sintaxe do estúdio e categorias
+    const estudioNome = detalhes.production_companies && detalhes.production_companies[0] 
+      ? detalhes.production_companies[0].name 
+      : 'Independente';
+      
+    const categoriasLista = detalhes.genres 
+      ? detalhes.genres.map(g => g.name) 
+      : ['Cinema'];
 
     // 4. Estrutura o objeto final idêntico ao esperado pelo Letreiro
     const novoDesafioDiario = {
