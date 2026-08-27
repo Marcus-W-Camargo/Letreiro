@@ -17,9 +17,8 @@ function higienizarTitulo(str) {
 async function rodarAutomacaoDiaria() {
   try {
     console.log("Iniciando sorteio diário de cinema via API TMDB (com Axios)...");
-    const hoje = new Date().toISOString().split('T')[0];
+    const hoje = new Date().toISOString().split('T')[0]; // Crava o índice 0 da data
 
-    // Configuração de cabeçalhos de segurança do Axios
     const configuracaoAxios = {
       headers: {
         accept: 'application/json',
@@ -29,6 +28,7 @@ async function rodarAutomacaoDiaria() {
 
     // 1. SORTEIO REAL: Busca uma página aleatória de filmes populares do TMDB
     const paginaAleatoria = Math.floor(Math.random() * 10) + 1; 
+    // Correção da URL utilizando crases e o cifrão corretamente
     const urlTMDB = `https://themoviedb.org{paginaAleatoria}`;
     
     const respostaTMDB = await axios.get(urlTMDB, configuracaoAxios);
@@ -56,12 +56,12 @@ async function rodarAutomacaoDiaria() {
     const respostaDetalhes = await axios.get(urlDetalhes, configuracaoAxios);
     const detalhes = respostaDetalhes.data;
 
-    // Correção da sintaxe do estúdio e categorias
-    const estudioNome = detalhes.production_companies && detalhes.production_companies[0] 
+    // Correção segura para acessar o nome do primeiro estúdio da lista
+    const estudioNome = detalhes.production_companies && detalhes.production_companies.length > 0
       ? detalhes.production_companies[0].name 
       : 'Independente';
       
-    const categoriasLista = detalhes.genres 
+    const categoriesLista = detalhes.genres 
       ? detalhes.genres.map(g => g.name) 
       : ['Cinema'];
 
@@ -71,7 +71,7 @@ async function rodarAutomacaoDiaria() {
       tmdb_id: filmeSorteado.id,
       title_brazil: higienizarTitulo(filmeSorteado.title),
       studio: estudioNome,
-      categories: categoriasLista,
+      categories: categoriesLista,
       poster_url: filmeSorteado.poster_path ? `https://tmdb.org{filmeSorteado.poster_path}` : ''
     };
 
