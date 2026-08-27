@@ -23,6 +23,10 @@ function higienizarTitulo(str) {
     .trim();
 }
 
+function criarChaveTitulo(str) {
+  return higienizarTitulo(str).replace(/\s+/g, "");
+}
+
 async function buscarFilmesJaUsados() {
   const idsJaUsados = new Set();
   const titulosJaUsados = new Set();
@@ -46,7 +50,7 @@ async function buscarFilmesJaUsados() {
       }
 
       if (registro.title_brazil) {
-        titulosJaUsados.add(higienizarTitulo(registro.title_brazil));
+        titulosJaUsados.add(criarChaveTitulo(registro.title_brazil));
       }
     }
 
@@ -139,8 +143,9 @@ async function rodarAutomacaoDiaria() {
 
         const temNumero = /\d/.test(filme.title);
         const tituloHigienizado = higienizarTitulo(filme.title);
+        const chaveTitulo = criarChaveTitulo(filme.title);
         const idJaUsado = idsJaUsados.has(Number(filme.id));
-        const tituloJaUsado = titulosJaUsados.has(tituloHigienizado);
+        const tituloJaUsado = titulosJaUsados.has(chaveTitulo);
 
         return (
           !temNumero &&
@@ -163,6 +168,7 @@ async function rodarAutomacaoDiaria() {
         ];
 
       const tituloHigienizado = higienizarTitulo(filmeSorteado.title);
+      const chaveTitulo = criarChaveTitulo(filmeSorteado.title);
 
       console.log(
         `Filme candidato: ${filmeSorteado.title} (${filmeSorteado.id})`
@@ -224,7 +230,7 @@ async function rodarAutomacaoDiaria() {
         }
 
         idsJaUsados.add(Number(filmeSorteado.id));
-        titulosJaUsados.add(tituloHigienizado);
+        titulosJaUsados.add(chaveTitulo);
 
         console.log(
           `O filme ${tituloHigienizado} já existe no banco. Voltando ao sorteio para procurar outro filme...`
