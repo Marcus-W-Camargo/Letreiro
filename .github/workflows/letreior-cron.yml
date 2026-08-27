@@ -1,0 +1,30 @@
+name: Automação Diária Letreiro
+
+on:
+  schedule:
+    # Agenda para rodar todos os dias exatamente às 00:00 (Meia-noite)
+    - cron: '0 0 * * *'
+      timezone: 'America/Sao_Paulo'
+  workflow_dispatch: # Permite que você clique em um botão no GitHub para testar manualmente
+
+jobs:
+  sortear-filme-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixando repositório do Git
+        uses: actions/checkout@v4
+
+      - name: Instalando o Ambiente Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-size: 20
+
+      - name: Instalando Dependências do Banco
+        run: npm install @supabase/supabase-js
+
+      - name: Executando Script de Sorteio do TMDB
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: node scripts/sortearFilme.js
