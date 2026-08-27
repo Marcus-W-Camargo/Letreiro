@@ -1,0 +1,435 @@
+.pagina-container {
+  width: 100%;
+  min-height: 100dvh;
+  background: var(--lt-fundo);
+  color: var(--lt-texto);
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.pagina-header {
+  width: 100%;
+  max-width: 600px;
+  min-height: 65px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  border-bottom: 1px solid var(--lt-header-borda);
+  flex-shrink: 0;
+}
+
+.pagina-marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.pagina-header .pagina-marca {
+  grid-column: 2;
+}
+
+.pagina-marca-icone {
+  font-size: 1.6rem;
+  line-height: 1;
+}
+
+.pagina-marca-nome {
+  font-size: 1.6rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+.pagina-tema {
+  grid-column: 3;
+  justify-self: end;
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--lt-tecla);
+  color: var(--lt-texto);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px var(--lt-sombra);
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.pagina-tema:hover {
+  background: var(--lt-tecla-acao);
+}
+
+.pagina-tema:active {
+  transform: scale(0.95);
+}
+
+.pagina-inicial-conteudo {
+  flex: 1;
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 24px 24px 12vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.pagina-marca-destaque {
+  margin-bottom: 26px;
+}
+
+.pagina-marca-destaque .pagina-marca-icone {
+  font-size: clamp(2rem, 7vw, 2.7rem);
+}
+
+.pagina-marca-destaque .pagina-marca-nome {
+  font-size: clamp(2rem, 7vw, 2.7rem);
+  letter-spacing: 0.5px;
+}
+
+.pagina-apresentacao {
+  max-width: 430px;
+  margin: 0 0 30px;
+  color: var(--lt-texto);
+  font-size: clamp(1.25rem, 4.4vw, 1.65rem);
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.btn-letreiro-dia,
+.btn-ir-calendario {
+  border: 0;
+  border-radius: 14px;
+  background: var(--lt-verde);
+  color: #fff;
+  min-height: 54px;
+  padding: 0 22px;
+  font-size: 1rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--lt-verde) 25%, transparent);
+  transition: transform 0.15s ease, filter 0.2s ease;
+}
+
+.btn-letreiro-dia {
+  min-width: min(100%, 310px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-seta {
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 9px solid currentColor;
+  margin-left: 2px;
+}
+
+.btn-letreiro-dia:hover,
+.btn-ir-calendario:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.07);
+}
+
+.link-letreiros-anteriores {
+  margin-top: 20px;
+  padding: 8px 10px;
+  border: 0;
+  background: transparent;
+  color: var(--lt-texto-suave);
+  font: inherit;
+  font-size: 0.98rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.15s ease;
+}
+
+.link-letreiros-anteriores:hover {
+  color: var(--lt-texto);
+  transform: translateY(-1px);
+}
+
+.calendario-conteudo {
+  flex: 1;
+  width: min(100%, 720px);
+  margin: 0 auto;
+  padding: 30px 18px 36px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+
+.calendario-titulos {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.calendario-titulos h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 5.5vw, 2.25rem);
+  letter-spacing: -0.035em;
+}
+
+.calendario-titulos p {
+  margin: 9px 0 0;
+  color: var(--lt-texto-suave);
+  font-size: clamp(0.95rem, 3vw, 1.08rem);
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+.calendario-semana,
+.calendario-grade {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendario-semana {
+  gap: 8px;
+  margin-bottom: 12px;
+  color: var(--lt-texto-suave);
+  font-size: 0.86rem;
+  font-weight: 800;
+  text-align: center;
+}
+
+.calendario-grade {
+  gap: 12px 8px;
+}
+
+.calendario-vazio {
+  min-width: 0;
+}
+
+.claquete-dia {
+  --claquete-cor: var(--lt-tecla);
+  min-width: 0;
+  aspect-ratio: 0.94;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lt-texto);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  filter: drop-shadow(0 4px 7px var(--lt-sombra));
+  transition: transform 0.16s ease, opacity 0.2s ease, filter 0.2s ease;
+}
+
+.claquete-dia:hover:not(:disabled) {
+  transform: translateY(-3px);
+}
+
+.claquete-dia.status-incompleto {
+  --claquete-cor: var(--lt-amarelo);
+}
+
+.claquete-dia.status-concluido {
+  --claquete-cor: var(--lt-verde);
+}
+
+.claquete-dia.dia-futuro {
+  opacity: 0.32;
+  cursor: default;
+  filter: grayscale(0.18);
+}
+
+.claquete-dia.dia-atual::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border: 2px solid color-mix(in srgb, var(--lt-texto) 62%, transparent);
+  border-radius: 10px;
+  pointer-events: none;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--lt-fundo) 86%, transparent);
+}
+
+.claquete-topo {
+  height: 25%;
+  min-height: 15px;
+  border-radius: 7px 7px 2px 2px;
+  background: var(--claquete-cor);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: center;
+  gap: 6px;
+  padding: 0 7px;
+  box-sizing: border-box;
+  transform: skewY(-4deg);
+  transform-origin: bottom left;
+}
+
+.claquete-topo i {
+  height: 42%;
+  border-radius: 2px;
+  background: var(--lt-fundo);
+  opacity: 0.92;
+}
+
+.claquete-corpo {
+  flex: 1;
+  margin-top: 3px;
+  border-radius: 3px 3px 8px 8px;
+  background: var(--claquete-cor);
+  padding: 11%;
+  box-sizing: border-box;
+  display: flex;
+}
+
+.claquete-numero {
+  flex: 1;
+  border-radius: 6px;
+  background: var(--lt-fundo);
+  color: var(--lt-texto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 900;
+  font-size: clamp(1rem, 4.2vw, 1.35rem);
+  line-height: 1;
+}
+
+.calendario-legenda {
+  margin-top: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  color: var(--lt-texto-suave);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.calendario-legenda span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.legenda-cor {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.legenda-incompleto {
+  background: var(--lt-amarelo);
+}
+
+.legenda-concluido {
+  background: var(--lt-verde);
+}
+
+.pagina-erro-conteudo {
+  flex: 1;
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: 32px 24px 12vh;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.pagina-erro-icone {
+  font-size: 2.7rem;
+  margin-bottom: 14px;
+}
+
+.pagina-erro-conteudo h1 {
+  margin: 0;
+  font-size: clamp(1.55rem, 5vw, 2rem);
+}
+
+.pagina-erro-conteudo p {
+  margin: 12px 0 26px;
+  color: var(--lt-texto-suave);
+  line-height: 1.55;
+}
+
+.site-header-acoes {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  justify-self: start;
+}
+
+.btn-calendario {
+  font-size: 1.12rem;
+}
+
+.jogo-data-desafio {
+  margin: -1px 0 7px;
+  color: var(--lt-texto-suave);
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: capitalize;
+  flex-shrink: 0;
+}
+
+@media (max-width: 480px) {
+  .pagina-header {
+    min-height: 64px;
+    padding: 11px 14px;
+  }
+
+  .pagina-marca-nome {
+    font-size: 1.45rem;
+  }
+
+  .pagina-marca-destaque {
+    margin-bottom: 24px;
+  }
+
+  .pagina-marca-destaque .pagina-marca-nome,
+  .pagina-marca-destaque .pagina-marca-icone {
+    font-size: 2.2rem;
+  }
+
+  .calendario-conteudo {
+    padding: 24px 6px 30px;
+  }
+
+  .calendario-titulos {
+    margin-bottom: 28px;
+  }
+
+  .calendario-semana {
+    gap: 3px;
+    font-size: 0.82rem;
+  }
+
+  .calendario-grade {
+    gap: 10px 3px;
+  }
+
+  .claquete-topo {
+    gap: 4px;
+    padding: 0 5px;
+  }
+
+  .claquete-numero {
+    font-size: 1.05rem;
+  }
+
+  .calendario-legenda {
+    gap: 16px;
+    margin-top: 30px;
+  }
+}

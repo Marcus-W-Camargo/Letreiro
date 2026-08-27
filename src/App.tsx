@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useMovimentacao } from './useMovimentacao'
 import { useDicionario } from './useDicionario'
 import { supabase } from './supabaseClient'
+import { chaveData, formatarDataLonga } from './dateUtils'
 import type { LetrasDigitadas, EstruturaPalavra } from './useMovimentacao'
 import './App.css'
 
@@ -29,6 +30,23 @@ interface InfoFilmeSupabase {
   posterUrl: string;
 }
 
+interface AppProps {
+  dataDesafio: Date;
+  onDesafioAusente?: () => void;
+}
+
+interface ProgressoJogo {
+  status?: 'incompleto' | 'concluido';
+  letrasDigitadas?: LetrasDigitadas;
+  cursorAtual?: number;
+  statusTeclado?: StatusTeclado;
+  tentativasAnteriores?: Tentativa[];
+  jogoGanhou?: boolean;
+  dicasAbertas?: DicasAbertas;
+  dicaAtiva?: TipoDica | null;
+  tituloVitoria?: string;
+}
+
 function obterTemaInicial(): Tema {
   if (typeof window === 'undefined') return 'dark';
   const salvo = localStorage.getItem('letreiro-tema');
@@ -36,7 +54,14 @@ function obterTemaInicial(): Tema {
   return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
 }
 
-function App() {
+function App({ dataDesafio, onDesafioAusente }: AppProps) {
+  // ==========================================
+  // DATA E PERSISTÊNCIA DO DESAFIO
+  // ==========================================
+  const dataDesafioBanco = chaveData(dataDesafio);
+  const chaveProgresso = `letreiro-progresso-${dataDesafioBanco}`;
+  const textoDataDesafio = formatarDataLonga(dataDesafio);
+
   // ==========================================
   // ESTADOS PRINCIPAIS DO JOGO
   // ==========================================
@@ -105,17 +130,22 @@ function App() {
 
   const { dicionarioBr, carregandoDicionario } = useDicionario();
 
-  // Ciclo de leitura puramente estático e centralizado do Supabase
+  // Controle de restauração e inicialização do cursor
+  const cursorInicializadoRef = useRef(false);
+  const filmeAnteriorRef = useRef('');
+  const progressoRestauradoRef = useRef(false);
+  const ignorarSalvamentoAposRestauroRef = useRef(false);
+
+  // Lê exatamente o filme correspondente à data da URL.
   useEffect(() => {
     async function carregarFilmeSalvo() {
       try {
         setCarregandoFilme(true);
-        const hoje = new Date().toISOString().split('T')[0];
 
         const { data, error: erroBanco } = await supabase
           .from('daily_movies')
           .select('title_brazil, studio, categories, poster_url')
-          .eq('release_date', hoje)
+          .eq('release_date', dataDesafioBanco)
           .maybeSingle();
 
         if (erroBanco) throw erroBanco;
@@ -128,16 +158,17 @@ function App() {
             posterUrl: data.poster_url || ''
           });
         } else {
-          console.warn(`Nenhum desafio cadastrado no Supabase para a data de hoje: ${hoje}`);
+          console.warn(`Nenhum desafio cadastrado no Supabase para a data: ${dataDesafioBanco}`);
+          onDesafioAusente?.();
         }
       } catch (err) {
-        console.error('Erro ao ler filme estático do dia:', err);
+        console.error(`Erro ao ler o filme de ${dataDesafioBanco}:`, err);
       } finally {
         setCarregandoFilme(false);
       }
     }
     carregarFilmeSalvo();
-  }, []);
+  }, [dataDesafioBanco, onDesafioAusente]);
 
   // Aplica o tema no documento e salva a preferência
   useEffect(() => {
@@ -148,6 +179,70 @@ function App() {
   const alternarTema = () => {
     setTema(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
+
+  // Restaura somente o progresso da data atualmente aberta.
+  useEffect(() => {
+    if (!filmeDoDia || progressoRestauradoRef.current) return;
+    progressoRestauradoRef.current = true;
+
+    const salvo = localStorage.getItem(chaveProgresso);
+    if (!salvo) return;
+
+    try {
+      const progresso = JSON.parse(salvo) as ProgressoJogo;
+      ignorarSalvamentoAposRestauroRef.current = true;
+
+      if (progresso.letrasDigitadas && typeof progresso.letrasDigitadas === 'object') {
+        setLetrasDigitadas(progresso.letrasDigitadas);
+      }
+
+      if (progresso.statusTeclado && typeof progresso.statusTeclado === 'object') {
+        setStatusTeclado(progresso.statusTeclado);
+      }
+
+      if (Array.isArray(progresso.tentativasAnteriores)) {
+        setTentativasAnteriores(progresso.tentativasAnteriores);
+      }
+
+      if (typeof progresso.jogoGanhou === 'boolean') {
+        setJogoGanhou(progresso.jogoGanhou);
+      }
+
+      if (progresso.dicasAbertas && typeof progresso.dicasAbertas === 'object') {
+        setDicasAbertas({
+          estudio: Boolean(progresso.dicasAbertas.estudio),
+          genero: Boolean(progresso.dicasAbertas.genero),
+          capa: Boolean(progresso.dicasAbertas.capa),
+        });
+      }
+
+      if (
+        progresso.dicaAtiva === null ||
+        progresso.dicaAtiva === 'estudio' ||
+        progresso.dicaAtiva === 'genero' ||
+        progresso.dicaAtiva === 'capa'
+      ) {
+        setDicaAtiva(progresso.dicaAtiva);
+      }
+
+      if (typeof progresso.tituloVitoria === 'string' && progresso.tituloVitoria.trim()) {
+        setTituloVitoria(progresso.tituloVitoria);
+      }
+
+      if (progresso.jogoGanhou === true) {
+        setCursorAtual(-1);
+        cursorInicializadoRef.current = true;
+      } else if (typeof progresso.cursorAtual === 'number') {
+        setCursorAtual(progresso.cursorAtual);
+        cursorInicializadoRef.current = true;
+      }
+    } catch (erro) {
+      console.warn(`Progresso local inválido para ${dataDesafioBanco}. O registro será descartado.`, erro);
+      localStorage.removeItem(chaveProgresso);
+      ignorarSalvamentoAposRestauroRef.current = false;
+    }
+  }, [filmeDoDia, chaveProgresso, dataDesafioBanco, setLetrasDigitadas, setCursorAtual]);
+
   // Registro estável para o listener ler os estados em tempo real sem closures congeladas
   const dadosAtuaisRef = useRef<{
     letrasDigitadas: LetrasDigitadas;
@@ -162,10 +257,6 @@ function App() {
     jogoGanhou: false,
     filmeNormalizado: '',
   });
-
-  // Garante que o cursor inicial só seja posicionado uma vez por filme
-  const cursorInicializadoRef = useRef(false);
-  const filmeAnteriorRef = useRef('');
 
   useEffect(() => {
     dadosAtuaisRef.current = {
@@ -183,7 +274,6 @@ function App() {
 
     if (filmeNormalizado !== filmeAnteriorRef.current) {
       filmeAnteriorRef.current = filmeNormalizado;
-      cursorInicializadoRef.current = false;
     }
 
     if (!cursorInicializadoRef.current) {
@@ -200,6 +290,53 @@ function App() {
       });
     }
   }, [filmeNormalizado, totalCaracteres, dicionarioBr, setCursorAtual, obterProximoIndiceValido]);
+
+  // Persiste o andamento da data aberta. Cada dia usa uma chave isolada.
+  useEffect(() => {
+    if (!filmeDoDia || !progressoRestauradoRef.current) return;
+
+    if (ignorarSalvamentoAposRestauroRef.current) {
+      ignorarSalvamentoAposRestauroRef.current = false;
+      return;
+    }
+
+    const houveInteracao =
+      Object.keys(letrasDigitadas).length > 0 ||
+      tentativasAnteriores.length > 0 ||
+      contadorDicas > 0 ||
+      jogoGanhou;
+
+    if (!houveInteracao) {
+      localStorage.removeItem(chaveProgresso);
+      return;
+    }
+
+    const progresso: ProgressoJogo = {
+      status: jogoGanhou ? 'concluido' : 'incompleto',
+      letrasDigitadas,
+      cursorAtual,
+      statusTeclado,
+      tentativasAnteriores,
+      jogoGanhou,
+      dicasAbertas,
+      dicaAtiva,
+      tituloVitoria,
+    };
+
+    localStorage.setItem(chaveProgresso, JSON.stringify(progresso));
+  }, [
+    filmeDoDia,
+    chaveProgresso,
+    letrasDigitadas,
+    cursorAtual,
+    statusTeclado,
+    tentativasAnteriores,
+    jogoGanhou,
+    dicasAbertas,
+    dicaAtiva,
+    tituloVitoria,
+    contadorDicas,
+  ]);
 
   // Ref sempre atualizado com a função de tecla mais recente (evita closure velha)
   const lidarComTeclaRef = useRef<(tecla: string) => void>(() => {});
@@ -481,7 +618,7 @@ function App() {
     return (
       <div className="jogo-container" style={{justifyContent: 'center', alignItems: 'center', textAlign: 'center'}}>
         <h2>🎬 Letreiro</h2>
-        <p style={{color: 'var(--lt-texto-suave)'}}>Sincronizando desafio diário com o Supabase...</p>
+        <p style={{color: 'var(--lt-texto-suave)'}}>Sincronizando Letreiro de {textoDataDesafio}...</p>
       </div>
     );
   }
@@ -517,9 +654,14 @@ function App() {
 
       <div className="jogo-container">
         <header className="site-header">
-          <button type="button" className="btn-header btn-dicas" onClick={() => setMenuDicasAberto((v) => !v)} title="Abrir dicas" aria-label="Abrir menu de dicas" aria-expanded={menuDicasAberto}>
-            💡{contadorDicas > 0 && <span className="btn-dicas-badge">{contadorDicas}</span>}
-          </button>
+          <div className="site-header-acoes">
+            <button type="button" className="btn-header btn-dicas" onClick={() => setMenuDicasAberto((v) => !v)} title="Abrir dicas" aria-label="Abrir menu de dicas" aria-expanded={menuDicasAberto}>
+              💡{contadorDicas > 0 && <span className="btn-dicas-badge">{contadorDicas}</span>}
+            </button>
+            <button type="button" className="btn-header btn-calendario" onClick={() => window.location.assign('/pt-br/selecdata')} title="Abrir Letreiros anteriores" aria-label="Abrir Letreiros anteriores">
+              📅
+            </button>
+          </div>
           <div className="site-header-titulo"><span className="site-header-emoji">🎬</span><h1>Letreiro</h1></div>
           <button type="button" className="btn-header btn-tema" onClick={alternarTema} title={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
             {tema === 'dark' ? '☀️' : '🌙'}
@@ -542,6 +684,8 @@ function App() {
           )}
         </header>
 
+        <p className="jogo-data-desafio">{textoDataDesafio}</p>
+
         {dicaAtiva && !jogoGanhou && (
           <div className={`painel-dica painel-dica-${dicaAtiva}`}>
             {dicaAtiva === 'estudio' && (<><span className="painel-dica-label">Dica leve — Estúdio</span><span className="painel-dica-valor">{infoFilme.estudio}</span></>)}
@@ -557,7 +701,7 @@ function App() {
           <div className={`filme-container palpite-atual-fixado${jogoGanhou ? ' palpite-vitoria' : ''}`}>
             {jogoGanhou ? (
               <button type="button" className="btn-trofeu-palpite" onClick={() => setMostrarModalVitoria(true)}>
-                <span className="btn-trofeu-icone">🏆</span><span className="btn-trofeu-texto">Vitória — Volte amanhã para outro filme!🎬</span>
+                <span className="btn-trofeu-icone">🏆</span><span className="btn-trofeu-texto">Vitória — Escolha outro Letreiro no calendário!🎬</span>
               </button>
             ) : (renderizarPalavrasDoFilme(letrasDigitadas, false))}
           </div>
