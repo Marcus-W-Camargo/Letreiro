@@ -27,12 +27,11 @@
   width: 100%;
   flex: 0 0 auto;
   box-sizing: border-box;
-  padding: 6px 14px calc(6px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid color-mix(in srgb, var(--lt-header-borda) 72%, transparent);
+  padding: 7px 14px calc(7px + env(safe-area-inset-bottom, 0px));
   background: var(--lt-fundo);
   color: var(--lt-texto-suave);
   text-align: center;
-  font-size: clamp(0.62rem, 1.55vw, 0.72rem);
+  font-size: clamp(0.74rem, 1.4vw, 0.82rem);
   line-height: 1.35;
   letter-spacing: 0.01em;
   z-index: 1100;
@@ -50,7 +49,7 @@
   .site-footer {
     padding-left: 10px;
     padding-right: 10px;
-    font-size: clamp(0.58rem, 2.45vw, 0.68rem);
+    font-size: clamp(0.68rem, 2.7vw, 0.76rem);
     line-height: 1.3;
   }
 }
@@ -59,15 +58,15 @@
   .site-footer {
     padding-left: 7px;
     padding-right: 7px;
-    font-size: 0.57rem;
+    font-size: 0.66rem;
   }
 }
 
 @media (max-height: 700px) {
   .site-footer {
-    padding-top: 4px;
-    padding-bottom: calc(4px + env(safe-area-inset-bottom, 0px));
-    font-size: 0.59rem;
+    padding-top: 5px;
+    padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px));
+    font-size: 0.7rem;
     line-height: 1.25;
   }
 }
