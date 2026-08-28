@@ -45,12 +45,81 @@
   text-wrap: balance;
 }
 
+/*
+ * O calendário deve ocupar somente a altura disponível entre o cabeçalho e
+ * o rodapé. As linhas da grade dividem esse espaço, em vez de crescerem pela
+ * largura através do aspect-ratio e forçarem uma barra de rolagem.
+ */
+.letreiro-shell .pagina-calendario {
+  overflow: hidden;
+}
+
+.letreiro-shell .calendario-conteudo {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  padding: clamp(12px, 2vh, 20px) 18px clamp(10px, 1.5vh, 16px);
+}
+
+.letreiro-shell .calendario-titulos {
+  flex: 0 0 auto;
+  margin-bottom: clamp(10px, 1.5vh, 16px);
+}
+
+.letreiro-shell .calendario-titulos p {
+  margin-top: 5px;
+}
+
+.letreiro-shell .calendario-semana {
+  flex: 0 0 auto;
+  margin-bottom: clamp(6px, 1vh, 10px);
+}
+
+.letreiro-shell .calendario-grade {
+  flex: 1 1 auto;
+  min-height: 0;
+  grid-auto-rows: minmax(0, 1fr);
+  gap: clamp(5px, 1vh, 9px) 8px;
+}
+
+.letreiro-shell .claquete-dia {
+  height: 100%;
+  min-height: 0;
+  aspect-ratio: auto;
+}
+
+.letreiro-shell .claquete-topo {
+  min-height: 8px;
+}
+
+.letreiro-shell .calendario-legenda {
+  flex: 0 0 auto;
+  margin-top: clamp(8px, 1.5vh, 14px);
+}
+
 @media (max-width: 480px) {
   .site-footer {
     padding-left: 10px;
     padding-right: 10px;
     font-size: clamp(0.68rem, 2.7vw, 0.76rem);
     line-height: 1.3;
+  }
+
+  .letreiro-shell .calendario-conteudo {
+    padding: clamp(10px, 1.7vh, 16px) 6px clamp(8px, 1.2vh, 12px);
+  }
+
+  .letreiro-shell .calendario-titulos {
+    margin-bottom: clamp(8px, 1.3vh, 13px);
+  }
+
+  .letreiro-shell .calendario-grade {
+    gap: clamp(4px, 0.8vh, 7px) 3px;
+  }
+
+  .letreiro-shell .calendario-legenda {
+    margin-top: clamp(7px, 1.2vh, 11px);
   }
 }
 
@@ -68,5 +137,35 @@
     padding-bottom: calc(5px + env(safe-area-inset-bottom, 0px));
     font-size: 0.7rem;
     line-height: 1.25;
+  }
+
+  .letreiro-shell .calendario-conteudo {
+    padding-top: 8px;
+    padding-bottom: 7px;
+  }
+
+  .letreiro-shell .calendario-titulos {
+    margin-bottom: 7px;
+  }
+
+  .letreiro-shell .calendario-titulos h1 {
+    font-size: clamp(1.4rem, 4.8vw, 1.75rem);
+  }
+
+  .letreiro-shell .calendario-titulos p {
+    margin-top: 3px;
+    font-size: 0.9rem;
+  }
+
+  .letreiro-shell .calendario-semana {
+    margin-bottom: 5px;
+  }
+
+  .letreiro-shell .calendario-grade {
+    gap: 4px 6px;
+  }
+
+  .letreiro-shell .calendario-legenda {
+    margin-top: 6px;
   }
 }
