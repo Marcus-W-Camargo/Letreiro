@@ -2,11 +2,10 @@ name: Automação Diária Letreiro
 
 on:
   schedule:
-    # Agenda para rodar todos os dias exatamente às 00:00 (Meia-noite)
-    - cron: '0 0 * * *'
+    - cron: '7/10 0 * * *'
       timezone: 'America/Sao_Paulo'
-  workflow_dispatch: # Permite que você clique em um botão no GitHub para testar manualmente
-
+  workflow_dispatch:
+    
 jobs:
   sortear-filme-job:
     runs-on: ubuntu-latest
