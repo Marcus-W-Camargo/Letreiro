@@ -1,0 +1,83 @@
+.calendario-mes-navegacao {
+  display: grid;
+  grid-template-columns: 42px minmax(0, auto) 42px;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 5px;
+}
+
+.calendario-mes-navegacao p {
+  margin: 0;
+  min-width: 0;
+}
+
+.calendario-seta {
+  width: 42px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--lt-texto);
+  font: inherit;
+  font-size: 1.35rem;
+  font-weight: 900;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.18s ease, background-color 0.18s ease, transform 0.12s ease, filter 0.18s ease;
+}
+
+[data-theme="dark"] .calendario-seta:not(:disabled) {
+  color: #ffffff;
+}
+
+.calendario-seta:not(:disabled):hover {
+  background: color-mix(in srgb, var(--lt-tecla) 70%, transparent);
+  transform: translateY(-1px);
+}
+
+.calendario-seta:not(:disabled):active {
+  transform: translateY(0) scale(0.96);
+}
+
+.calendario-seta:focus-visible {
+  outline: 2px solid var(--lt-texto);
+  outline-offset: 2px;
+}
+
+.calendario-seta:disabled {
+  color: var(--lt-texto-suave);
+  opacity: 0.24;
+  cursor: default;
+  filter: grayscale(1) blur(0.15px);
+}
+
+@media (max-width: 480px) {
+  .calendario-mes-navegacao {
+    grid-template-columns: 36px minmax(0, auto) 36px;
+    gap: 7px;
+    margin-top: 4px;
+  }
+
+  .calendario-seta {
+    width: 36px;
+    height: 30px;
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-height: 700px) {
+  .calendario-mes-navegacao {
+    margin-top: 2px;
+  }
+
+  .calendario-seta {
+    height: 27px;
+    font-size: 1.12rem;
+  }
+}

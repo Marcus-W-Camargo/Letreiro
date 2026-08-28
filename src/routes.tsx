@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import App from './App'
 import {
   chaveData,
@@ -7,15 +7,80 @@ import {
   interpretarDataDaRota,
 } from './dateUtils'
 import './Pages.css'
+import './CalendarNavigation.css'
 
 type Tema = 'dark' | 'light'
 type StatusDia = 'nao-jogado' | 'incompleto' | 'concluido'
 
 const PREFIXO = '/pt-br'
 const ROTA_CALENDARIO = `${PREFIXO}/selecdata`
+const PRIMEIRO_MES_CALENDARIO = new Date(2026, 7, 1)
+const INDICE_PRIMEIRO_MES = PRIMEIRO_MES_CALENDARIO.getFullYear() * 12 + PRIMEIRO_MES_CALENDARIO.getMonth()
 
 function navegar(destino: string) {
   window.location.assign(destino)
+}
+
+function indiceDoMes(data: Date) {
+  return data.getFullYear() * 12 + data.getMonth()
+}
+
+function inicioDoMes(data: Date) {
+  return new Date(data.getFullYear(), data.getMonth(), 1)
+}
+
+function useDataLocalAtualizada() {
+  const [hoje, setHoje] = useState<Date>(dataLocalAtual)
+
+  useEffect(() => {
+    let timeoutId: number | undefined
+
+    const atualizarData = () => {
+      const novaData = dataLocalAtual()
+      setHoje((dataAnterior) =>
+        dataAnterior.getTime() === novaData.getTime() ? dataAnterior : novaData,
+      )
+    }
+
+    const agendarProximaVirada = () => {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
+
+      const agora = new Date()
+      const proximaVirada = new Date(
+        agora.getFullYear(),
+        agora.getMonth(),
+        agora.getDate() + 1,
+        0,
+        0,
+        0,
+        150,
+      )
+      const espera = Math.max(250, proximaVirada.getTime() - agora.getTime())
+
+      timeoutId = window.setTimeout(() => {
+        atualizarData()
+        agendarProximaVirada()
+      }, espera)
+    }
+
+    const atualizarAoRetornar = () => {
+      if (document.visibilityState !== 'visible') return
+      atualizarData()
+      agendarProximaVirada()
+    }
+
+    window.addEventListener('focus', atualizarAoRetornar)
+    document.addEventListener('visibilitychange', atualizarAoRetornar)
+    agendarProximaVirada()
+
+    return () => {
+      if (timeoutId !== undefined) window.clearTimeout(timeoutId)
+      window.removeEventListener('focus', atualizarAoRetornar)
+      document.removeEventListener('visibilitychange', atualizarAoRetornar)
+    }
+  }, [])
+
+  return hoje
 }
 
 function obterTemaInicial(): Tema {
@@ -100,9 +165,7 @@ function MarcaDestaque() {
   )
 }
 
-function PaginaInicial() {
-  const hoje = dataLocalAtual()
-
+function PaginaInicial({ hoje }: { hoje: Date }) {
   return (
     <div className="pagina-container pagina-inicial">
       <CabecalhoPagina mostrarMarca={false} />
@@ -151,10 +214,45 @@ function ClaqueteDia({ data, hoje }: { data: Date; hoje: Date }) {
   )
 }
 
-function Calendario() {
-  const hoje = dataLocalAtual()
-  const ano = hoje.getFullYear()
-  const mes = hoje.getMonth()
+function Calendario({ hoje }: { hoje: Date }) {
+  const indiceMesAtual = indiceDoMes(hoje)
+  const [mesExibido, setMesExibido] = useState(() => inicioDoMes(hoje))
+  const ultimoIndiceMesAtualRef = useRef(indiceMesAtual)
+
+  useEffect(() => {
+    const indiceAnterior = ultimoIndiceMesAtualRef.current
+    if (indiceAnterior === indiceMesAtual) return
+
+    setMesExibido((mesAnteriormenteExibido) =>
+      indiceDoMes(mesAnteriormenteExibido) === indiceAnterior
+        ? inicioDoMes(hoje)
+        : mesAnteriormenteExibido,
+    )
+    ultimoIndiceMesAtualRef.current = indiceMesAtual
+  }, [hoje, indiceMesAtual])
+
+  const ano = mesExibido.getFullYear()
+  const mes = mesExibido.getMonth()
+  const indiceMesExibido = indiceDoMes(mesExibido)
+  const podeVoltar = indiceMesExibido > INDICE_PRIMEIRO_MES
+  const podeAvancar = indiceMesExibido < indiceMesAtual
+
+  const mudarMes = (direcao: -1 | 1) => {
+    setMesExibido((mesAtualExibido) => {
+      const candidato = new Date(
+        mesAtualExibido.getFullYear(),
+        mesAtualExibido.getMonth() + direcao,
+        1,
+      )
+      const indiceCandidato = indiceDoMes(candidato)
+
+      if (indiceCandidato < INDICE_PRIMEIRO_MES || indiceCandidato > indiceMesAtual) {
+        return mesAtualExibido
+      }
+
+      return candidato
+    })
+  }
 
   const dias = useMemo(() => {
     const totalDias = new Date(ano, mes + 1, 0).getDate()
@@ -174,7 +272,29 @@ function Calendario() {
       <main className="calendario-conteudo">
         <div className="calendario-titulos">
           <h1>Letreiros anteriores</h1>
-          <p>{tituloFormatado}</p>
+          <div className="calendario-mes-navegacao" aria-label="Navegação entre meses">
+            <button
+              type="button"
+              className="calendario-seta"
+              onClick={() => mudarMes(-1)}
+              disabled={!podeVoltar}
+              aria-label="Ir para o mês anterior"
+              title={podeVoltar ? 'Mês anterior' : 'Não há mês anterior disponível'}
+            >
+              &lt;
+            </button>
+            <p aria-live="polite">{tituloFormatado}</p>
+            <button
+              type="button"
+              className="calendario-seta"
+              onClick={() => mudarMes(1)}
+              disabled={!podeAvancar}
+              aria-label="Ir para o próximo mês"
+              title={podeAvancar ? 'Próximo mês' : 'Não há próximo mês disponível'}
+            >
+              &gt;
+            </button>
+          </div>
         </div>
 
         <div className="calendario-semana" aria-hidden="true">
@@ -258,6 +378,7 @@ function normalizarCaminho(caminho: string) {
 }
 
 export default function Routes() {
+  const hoje = useDataLocalAtualizada()
   const caminho = normalizarCaminho(window.location.pathname.toLowerCase())
 
   if (caminho === '/') {
@@ -265,14 +386,13 @@ export default function Routes() {
     return null
   }
 
-  if (caminho === PREFIXO) return <PaginaInicial />
-  if (caminho === ROTA_CALENDARIO) return <Calendario />
+  if (caminho === PREFIXO) return <PaginaInicial hoje={hoje} />
+  if (caminho === ROTA_CALENDARIO) return <Calendario hoje={hoje} />
 
   const prefixoData = `${PREFIXO}/`
   if (caminho.startsWith(prefixoData)) {
     const trechoData = caminho.slice(prefixoData.length)
     const data = interpretarDataDaRota(trechoData)
-    const hoje = dataLocalAtual()
 
     if (data && data.getTime() <= hoje.getTime()) {
       return <JogoRota data={data} />
