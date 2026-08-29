@@ -2,10 +2,12 @@ name: Automação Diária Letreiro
 
 on:
   schedule:
-    - cron: '7/10 0 * * *'
-      timezone: 'America/Sao_Paulo'
+    # GitHub Actions agenda em UTC. Em São Paulo (UTC-3), roda às 00:07, 00:17,
+    # 00:27, 00:37 e 00:47, com uma tentativa extra de segurança às 01:05.
+    - cron: '7,17,27,37,47 3 * * *'
+    - cron: '5 4 * * *'
   workflow_dispatch:
-    
+
 jobs:
   sortear-filme-job:
     runs-on: ubuntu-latest
