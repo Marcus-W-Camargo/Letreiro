@@ -3,6 +3,7 @@ import { useMovimentacao } from './useMovimentacao'
 import { useDicionario } from './useDicionario'
 import { supabase } from './supabaseClient'
 import { chaveData, formatarDataLonga } from './dateUtils'
+import BotaoSobre from './BotaoSobre'
 import type { LetrasDigitadas, EstruturaPalavra } from './useMovimentacao'
 import './App.css'
 
@@ -345,6 +346,9 @@ function App({ dataDesafio, onDesafioAusente }: AppProps) {
   useEffect(() => {
     const escutarTecladoFisico = (evento: KeyboardEvent) => {
       if (carregandoDicionario || carregandoFilme) return;
+      // Navegar pelos controles do cabeçalho não deve digitar nem enviar um palpite.
+      if (evento.defaultPrevented || (evento.target instanceof HTMLElement &&
+        evento.target.closest('header, a, input, textarea, select, [contenteditable="true"], [role="dialog"]'))) return;
 
       const t = removerAcentos(evento.key).toUpperCase();
 
@@ -655,20 +659,24 @@ function App({ dataDesafio, onDesafioAusente }: AppProps) {
       <div className="jogo-container">
         <header className="site-header">
           <div className="site-header-acoes">
-            <button type="button" className="btn-header btn-dicas" onClick={() => setMenuDicasAberto((v) => !v)} title="Abrir dicas" aria-label="Abrir menu de dicas" aria-expanded={menuDicasAberto}>
-              💡{contadorDicas > 0 && <span className="btn-dicas-badge">{contadorDicas}</span>}
-            </button>
+            <BotaoSobre aoAbrir={() => setMenuDicasAberto(false)} />
             <button type="button" className="btn-header btn-calendario" onClick={() => window.location.assign('/pt-br/selecdata')} title="Abrir Letreiros anteriores" aria-label="Abrir Letreiros anteriores">
               📅
             </button>
           </div>
           <div className="site-header-titulo"><span className="site-header-emoji">🎬</span><h1>Letreiro</h1></div>
-          <button type="button" className="btn-header btn-tema" onClick={alternarTema} title={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
-            {tema === 'dark' ? '☀️' : '🌙'}
-          </button>
+          <div className="site-header-acoes site-header-acoes-direita">
+            <button type="button" className="btn-header btn-dicas" onClick={() => setMenuDicasAberto((v) => !v)} title="Abrir dicas" aria-label="Abrir menu de dicas" aria-expanded={menuDicasAberto} aria-controls="menu-dicas">
+              <span className="btn-dicas-icone" aria-hidden="true">?</span>
+              {contadorDicas > 0 && <span className="btn-dicas-badge">{contadorDicas}</span>}
+            </button>
+            <button type="button" className="btn-header btn-tema" onClick={alternarTema} title={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'} aria-label={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
+              {tema === 'dark' ? '☀️' : '🌙'}
+            </button>
+          </div>
 
           {menuDicasAberto && (
-            <div className="menu-dicas" role="menu">
+            <div id="menu-dicas" className="menu-dicas" role="menu" aria-label="Dicas do jogo">
               <p className="menu-dicas-titulo">Escolha uma dica</p>
               <button type="button" className={`menu-dicas-item ${dicasAbertas.estudio ? 'ja-usada' : ''}`} onClick={() => abrirDica('estudio')} role="menuitem">
                 <span className="menu-dicas-nivel">Leve</span><span className="menu-dicas-desc">{dicasAbertas.estudio ? infoFilme.estudio : 'Estúdio'}</span>

@@ -13,7 +13,31 @@
   justify-self: center;
 }
 
-.site-header > .btn-tema {
+.site-header > .site-header-acoes-direita {
   grid-column: 3;
   justify-self: end;
+}
+
+/* Mantém a marca centralizada entre os dois pares de botões no celular. */
+@media (max-width: 480px) {
+  .site-header {
+    padding: 11px 14px;
+  }
+
+  .site-header-titulo {
+    gap: 5px;
+  }
+
+  .site-header .site-header-titulo h1 {
+    font-size: clamp(1.05rem, 4.5vw, 1.6rem) !important;
+    letter-spacing: 0.5px;
+  }
+
+  .site-header-emoji {
+    font-size: clamp(1.1rem, 4.8vw, 1.6rem);
+  }
+
+  .site-header-acoes {
+    gap: 4px;
+  }
 }

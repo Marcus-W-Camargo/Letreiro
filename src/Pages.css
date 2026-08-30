@@ -9,6 +9,8 @@
 }
 
 .pagina-header {
+  position: relative;
+  z-index: 2000;
   width: 100%;
   max-width: 600px;
   min-height: 65px;

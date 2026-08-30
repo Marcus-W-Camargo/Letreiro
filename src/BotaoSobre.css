@@ -1,0 +1,90 @@
+.sobre-container {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  justify-self: start;
+  flex-shrink: 0;
+}
+
+.sobre-balao {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 0;
+  z-index: 2100;
+  width: min(310px, calc(100vw - 32px));
+  padding: 20px;
+  box-sizing: border-box;
+  border: 1px solid var(--lt-borda);
+  border-radius: 12px;
+  background: var(--lt-superficie);
+  color: var(--lt-texto);
+  box-shadow: 0 8px 24px var(--lt-sombra);
+  text-align: left;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.sobre-balao::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 14px;
+  width: 10px;
+  height: 10px;
+  background: var(--lt-superficie);
+  border-top: 1px solid var(--lt-borda);
+  border-left: 1px solid var(--lt-borda);
+  transform: rotate(45deg);
+}
+
+.sobre-balao p {
+  margin: 0;
+  padding-right: 18px;
+}
+
+.sobre-balao .sobre-acesso {
+  margin-top: 14px;
+  padding-right: 0;
+  color: var(--lt-texto-suave);
+}
+
+.sobre-acesso a {
+  display: block;
+  width: fit-content;
+  padding: 7px 0;
+  color: var(--lt-texto);
+  font-weight: 700;
+  text-underline-offset: 4px;
+  overflow-wrap: anywhere;
+}
+
+.sobre-acesso a:hover {
+  color: var(--lt-verde);
+}
+
+.sobre-fechar {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--lt-texto-suave);
+  font-size: 1.5rem;
+  cursor: pointer;
+}
+
+.sobre-fechar:hover {
+  background: var(--lt-tecla);
+  color: var(--lt-texto);
+}
+
+.btn-header:focus-visible,
+.pagina-tema:focus-visible,
+.sobre-fechar:focus-visible,
+.sobre-acesso a:focus-visible {
+  outline: 2px solid var(--lt-texto);
+  outline-offset: 3px;
+}

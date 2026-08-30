@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import App from './App'
+import BotaoSobre, { ROTA_TESTE_EFETUADO } from './BotaoSobre'
 import {
   chaveData,
   dataLocalAtual,
@@ -137,6 +138,7 @@ function CabecalhoPagina({ mostrarMarca = true }: { mostrarMarca?: boolean }) {
 
   return (
     <header className={`pagina-header${mostrarMarca ? '' : ' pagina-header-sem-marca'}`}>
+      <BotaoSobre />
       {mostrarMarca && (
         <a href={PREFIXO} className="pagina-marca pagina-marca-link" aria-label="Ir para a página inicial do Letreiro">
           <span className="pagina-marca-icone">🎬</span>
@@ -337,6 +339,21 @@ function LetreiroNaoEncontrado() {
   )
 }
 
+function TesteEfetuado() {
+  return (
+    <div className="pagina-container pagina-teste">
+      <CabecalhoPagina />
+      <main className="pagina-erro-conteudo">
+        <h1>Teste Efetuado</h1>
+        <p>O link funcionou! Em breve, você poderá conhecer meu portifólio por aqui.</p>
+        <button type="button" className="btn-ir-calendario" onClick={() => navegar(PREFIXO)}>
+          Voltar ao Letreiro
+        </button>
+      </main>
+    </div>
+  )
+}
+
 function JogoRota({ data }: { data: Date }) {
   const [desafioAusente, setDesafioAusente] = useState(false)
   const marcarDesafioAusente = useCallback(() => setDesafioAusente(true), [])
@@ -388,6 +405,7 @@ export default function Routes() {
 
   if (caminho === PREFIXO) return <PaginaInicial hoje={hoje} />
   if (caminho === ROTA_CALENDARIO) return <Calendario hoje={hoje} />
+  if (caminho === ROTA_TESTE_EFETUADO) return <TesteEfetuado />
 
   const prefixoData = `${PREFIXO}/`
   if (caminho.startsWith(prefixoData)) {
