@@ -1,9 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import './BotaoSobre.css'
 
-export const ROTA_TESTE_EFETUADO = '/pt-br/teste-efetuado'
-// Substituir apenas este destino pelo endereço do portfólio quando ele for publicado.
-const URL_PORTFOLIO = ROTA_TESTE_EFETUADO
+const URL_PORTFOLIO = 'https://marcuscamargo-portfolio.vercel.app/'
 
 export default function BotaoSobre({ aoAbrir }: { aoAbrir?: () => void }) {
   const [aberto, setAberto] = useState(false)
@@ -46,8 +44,8 @@ export default function BotaoSobre({ aoAbrir }: { aoAbrir?: () => void }) {
       <button
         ref={botaoRef}
         type="button"
-        className="btn-header btn-sobre"
-        title="Sobre"
+        className="btn-header btn-sobre botao-tooltip"
+        data-tooltip="Sobre"
         aria-label="Sobre Marcus Camargo"
         aria-expanded={aberto}
         aria-controls={balaoId}

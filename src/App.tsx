@@ -660,17 +660,17 @@ function App({ dataDesafio, onDesafioAusente }: AppProps) {
         <header className="site-header">
           <div className="site-header-acoes">
             <BotaoSobre aoAbrir={() => setMenuDicasAberto(false)} />
-            <button type="button" className="btn-header btn-calendario" onClick={() => window.location.assign('/pt-br/selecdata')} title="Abrir Letreiros anteriores" aria-label="Abrir Letreiros anteriores">
+            <button type="button" className="btn-header btn-calendario botao-tooltip" onClick={() => window.location.assign('/pt-br/selecdata')} data-tooltip="Todos os dias" aria-label="Abrir Letreiros anteriores">
               📅
             </button>
           </div>
           <div className="site-header-titulo"><span className="site-header-emoji">🎬</span><h1>Letreiro</h1></div>
           <div className="site-header-acoes site-header-acoes-direita">
-            <button type="button" className="btn-header btn-dicas" onClick={() => setMenuDicasAberto((v) => !v)} title="Abrir dicas" aria-label="Abrir menu de dicas" aria-expanded={menuDicasAberto} aria-controls="menu-dicas">
+            <button type="button" className="btn-header btn-dicas botao-tooltip" onClick={() => setMenuDicasAberto((v) => !v)} data-tooltip="Dicas" aria-label="Abrir menu de dicas" aria-expanded={menuDicasAberto} aria-controls="menu-dicas">
               <span className="btn-dicas-icone" aria-hidden="true">?</span>
               {contadorDicas > 0 && <span className="btn-dicas-badge">{contadorDicas}</span>}
             </button>
-            <button type="button" className="btn-header btn-tema" onClick={alternarTema} title={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'} aria-label={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
+            <button type="button" className="btn-header btn-tema botao-tooltip botao-tooltip-direita" onClick={alternarTema} data-tooltip="Alternar Tema" aria-label={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}>
               {tema === 'dark' ? '☀️' : '🌙'}
             </button>
           </div>
