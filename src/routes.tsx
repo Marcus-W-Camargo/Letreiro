@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import App from './App'
+import BotaoSobre from './BotaoSobre'
 import {
   chaveData,
   dataLocalAtual,
@@ -137,6 +138,7 @@ function CabecalhoPagina({ mostrarMarca = true }: { mostrarMarca?: boolean }) {
 
   return (
     <header className={`pagina-header${mostrarMarca ? '' : ' pagina-header-sem-marca'}`}>
+      <BotaoSobre />
       {mostrarMarca && (
         <a href={PREFIXO} className="pagina-marca pagina-marca-link" aria-label="Ir para a página inicial do Letreiro">
           <span className="pagina-marca-icone">🎬</span>
@@ -145,9 +147,9 @@ function CabecalhoPagina({ mostrarMarca = true }: { mostrarMarca?: boolean }) {
       )}
       <button
         type="button"
-        className="pagina-tema"
+        className="pagina-tema botao-tooltip botao-tooltip-direita"
         onClick={alternarTema}
-        title={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
+        data-tooltip="Alternar Tema"
         aria-label={tema === 'dark' ? 'Mudar para tema claro' : 'Mudar para tema escuro'}
       >
         {tema === 'dark' ? '☀️' : '🌙'}

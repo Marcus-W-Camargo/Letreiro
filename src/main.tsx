@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import Routes from './routes.tsx'
 import SiteFooter from './SiteFooter.tsx'
 import './GameRoutes.css'
+import './Tooltips.css'
 
 // Aplica o tema salvo antes do React montar (evita flash)
 (() => {
