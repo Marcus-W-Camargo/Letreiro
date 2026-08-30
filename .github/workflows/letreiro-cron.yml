@@ -6,6 +6,8 @@ on:
     # 00:27, 00:37 e 00:47, com uma tentativa extra de segurança às 01:05.
     - cron: '7,17,27,37,47 3 * * *'
     - cron: '5 4 * * *'
+
+  # Mantido para permitir execução manual e disparo externo pela API REST do GitHub.
   workflow_dispatch:
 
 jobs:
@@ -13,10 +15,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Baixando repositório do Git
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Instalando o Ambiente Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: 22
 
