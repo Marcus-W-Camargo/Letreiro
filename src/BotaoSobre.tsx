@@ -69,7 +69,7 @@ export default function BotaoSobre({ aoAbrir }: { aoAbrir?: () => void }) {
           <p>Quer conhecer mais sobre mim e meus projetos?</p>
           <p className="sobre-acesso">
             Acesse:
-            <a href={URL_PORTFOLIO}>Marcus Camargo | Portifólio</a>
+            <a href={URL_PORTFOLIO} target="_blank" rel="noopener noreferrer">Marcus Camargo | Portifólio</a>
           </p>
         </aside>
       )}
