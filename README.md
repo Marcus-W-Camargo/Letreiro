@@ -84,6 +84,8 @@ O frontend é responsável por:
 - armazenamento do progresso do jogador;
 - temas claro e escuro.
 
+O frontend não utiliza credenciais administrativas do Supabase e não contém token do TMDB. A consulta direta à API do TMDB fica restrita à automação de servidor.
+
 ### Automação
 
 O GitHub Actions executa `scripts/sortearFilme.js` com credenciais de servidor para:
@@ -109,6 +111,7 @@ O projeto usa um roteamento leve baseado em `window.location`, sem dependência 
 | `/pt-br` | Página inicial |
 | `/pt-br/selecdata` | Calendário de Letreiros anteriores |
 | `/pt-br/DD-MM-AA` | Jogo correspondente à data |
+| `/pt-br/privacidade` | Página de privacidade |
 | Data inexistente/inválida | Tela “Letreiro não encontrado” |
 
 Exemplo:
@@ -163,6 +166,21 @@ Exemplo conceitual:
 ```
 
 Para a integridade do banco, `release_date` não deve se repetir e `tmdb_id` deve ser único. O código também possui uma camada própria de prevenção contra filmes repetidos.
+
+### RLS e princípio de menor privilégio
+
+A tabela `public.daily_movies` utiliza **Row Level Security (RLS)** para separar a leitura pública do fluxo administrativo de escrita.
+
+O acesso esperado é:
+
+- `anon`: pode executar somente `SELECT`;
+- `anon`: não possui `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES` ou `TRIGGER`;
+- `PUBLIC`: não possui privilégios de escrita sobre `daily_movies`;
+- `service_role`: permanece reservado ao ambiente seguro da automação e pode realizar as operações administrativas necessárias.
+
+A política pública necessária é uma política de `SELECT` destinada ao papel `anon`. Não devem existir políticas de `INSERT`, `UPDATE`, `DELETE` ou `ALL` aplicáveis a `anon` ou `PUBLIC`.
+
+Essa separação permite que o navegador consulte o desafio diário sem conceder capacidade de alterar os registros do banco.
 
 ---
 
@@ -475,9 +493,22 @@ Isso permite abrir ou atualizar diretamente URLs como:
 
 ```text
 /pt-br/27-08-26
+/pt-br/privacidade
 ```
 
 sem retornar erro 404 do servidor.
+
+### Headers de segurança
+
+A aplicação publica headers de segurança pela configuração da Vercel, incluindo:
+
+- `Content-Security-Policy` (CSP);
+- `X-Content-Type-Options: nosniff`;
+- `Referrer-Policy: strict-origin-when-cross-origin`;
+- `X-Frame-Options: DENY`;
+- `Permissions-Policy` com câmera, microfone, geolocalização, pagamento e USB desabilitados.
+
+A CSP restringe scripts e assets ao necessário para o funcionamento do site, permite posters pelo domínio `image.tmdb.org` e conexões do frontend apenas com o próprio site e com o Supabase. `unsafe-eval` não é permitido. `unsafe-inline` permanece somente para estilos porque a interface atual ainda utiliza estilos inline legítimos.
 
 ---
 
@@ -489,6 +520,8 @@ sem retornar erro 404 do servidor.
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
+
+Apenas valores públicos necessários ao cliente ficam em variáveis `VITE_*`. O frontend não utiliza `VITE_TMDB_TOKEN`.
 
 ### GitHub Actions
 
@@ -542,6 +575,9 @@ Letreiro/
 │   ├── App.tsx                    # Jogo principal
 │   ├── App.css                    # Jogo e temas
 │   ├── Pages.css                  # Home e calendário
+│   ├── Privacy.tsx                # Página de privacidade
+│   ├── Privacy.css                # Estilos da página de privacidade
+│   ├── FooterPrivacy.css          # Estilo do link de privacidade no rodapé
 │   ├── routes.tsx                 # Rotas por URL/data
 │   ├── dateUtils.ts               # Utilitários de datas
 │   ├── supabaseClient.ts          # Cliente Supabase frontend
@@ -556,17 +592,43 @@ Letreiro/
 └── README.md
 ```
 
+O diretório de build `dist/` é gerado pelo Vite durante o build e permanece ignorado pelo Git, evitando versionar artefatos derivados.
+
 ---
 
 ## Segurança
 
-- `.env` não deve ser versionado.
-- `node_modules/` não deve ser versionado.
-- A chave anônima do Supabase pode ser usada pelo frontend dentro das políticas RLS adequadas.
-- A `service_role` deve permanecer exclusivamente em ambiente seguro/server-side.
-- As políticas RLS devem impedir escritas públicas indevidas.
+- `.env`, `node_modules/` e `dist/` não devem ser versionados.
+- A chave anônima do Supabase pode ser usada pelo frontend porque seu acesso é limitado por privilégios e RLS.
+- `daily_movies` mantém RLS habilitado e acesso público de leitura restrito ao papel `anon`.
+- Escrita pública (`INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES` e `TRIGGER`) é revogada de `anon` e de `PUBLIC`.
+- A `service_role` permanece exclusivamente em ambiente seguro/server-side para a automação diária.
+- O frontend não armazena nem utiliza o token da API do TMDB; as chamadas de seleção de filmes são feitas pela automação.
+- A Content Security Policy restringe scripts, imagens e conexões a origens necessárias e não permite `unsafe-eval`.
+- Headers adicionais reduzem riscos de MIME sniffing, framing indevido e exposição excessiva de referência/permissões do navegador.
 - A constraint única de `tmdb_id` complementa a validação da automação.
-- Validações no código e constraints no banco devem funcionar como camadas complementares.
+- Validações no código, RLS, privilégios PostgreSQL e constraints do banco funcionam como camadas complementares.
+
+---
+
+## Privacidade
+
+A página pública de privacidade está disponível em:
+
+```text
+/pt-br/privacidade
+```
+
+O escopo atual de privacidade do Letreiro é simples e funcional:
+
+- o progresso das partidas, tentativas, dicas e preferência de tema são armazenados localmente no navegador por meio de `localStorage`;
+- o Supabase armazena os desafios diários e o frontend consulta os registros necessários para exibir o jogo;
+- dados públicos de filmes e posters são fornecidos pelo TMDB;
+- a aplicação é hospedada na Vercel;
+- Supabase, TMDB e Vercel possuem suas próprias políticas de privacidade e suas infraestruturas podem manter logs técnicos necessários à operação;
+- não foram identificados no código atual cookies publicitários, Google Analytics ou outras ferramentas próprias de rastreamento analítico do usuário.
+
+O Letreiro não exige conta de usuário para manter o progresso e, atualmente, não sincroniza o histórico individual de partidas entre dispositivos.
 
 ---
 
@@ -634,6 +696,8 @@ The browser uses the public/anonymous Supabase credentials to **read** the chall
 
 The frontend handles routing, challenge loading, board rendering, input, word validation, color evaluation, hints, guess history, calendar state, player progress, and themes.
 
+The frontend does not use administrative Supabase credentials and does not contain a TMDB token. Direct TMDB API access is limited to the server-side automation.
+
 ### Automation
 
 GitHub Actions runs `scripts/sortearFilme.js` with server-side credentials to load used movies, query TMDB, prevent duplicates, select a candidate, fetch details, and write the challenge into `daily_movies`.
@@ -652,6 +716,7 @@ The app uses lightweight `window.location` routing without React Router.
 | `/pt-br` | Home |
 | `/pt-br/selecdata` | Previous Letreiros calendar |
 | `/pt-br/DD-MM-YY` | Challenge for a date |
+| `/pt-br/privacidade` | Privacy page |
 | Invalid/missing date | “Letreiro not found” screen |
 
 Two formats are used:
@@ -683,6 +748,21 @@ daily_movies
 | `poster_url` | text | TMDB poster URL |
 
 For data integrity, `release_date` should not repeat and `tmdb_id` should be unique. Application-level duplicate protection adds another safety layer.
+
+### RLS and least privilege
+
+The `public.daily_movies` table uses **Row Level Security (RLS)** to separate public reads from administrative writes.
+
+Expected access is:
+
+- `anon`: `SELECT` only;
+- `anon`: no `INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES`, or `TRIGGER` privileges;
+- `PUBLIC`: no write privileges on `daily_movies`;
+- `service_role`: reserved for the trusted automation environment and retains the administrative capabilities required by the daily workflow.
+
+The only public-facing policy required is a `SELECT` policy targeted at `anon`. There should be no `INSERT`, `UPDATE`, `DELETE`, or `ALL` policies applicable to `anon` or `PUBLIC`.
+
+This allows browsers to read the daily challenge without granting them the ability to modify database records.
 
 ---
 
@@ -910,7 +990,19 @@ The message depends on attempts and hints used. The modal may display the unblur
 
 🌐 https://letreiro-cine-puzzle.vercel.app/pt-br
 
-`vercel.json` redirects `/` to `/pt-br` and rewrites application routes to `/index.html`, allowing direct access and refreshes on paths such as `/pt-br/27-08-26`.
+`vercel.json` redirects `/` to `/pt-br` and rewrites application routes to `/index.html`, allowing direct access and refreshes on paths such as `/pt-br/27-08-26` and `/pt-br/privacidade`.
+
+### Security headers
+
+The application publishes security headers through the Vercel configuration, including:
+
+- `Content-Security-Policy` (CSP);
+- `X-Content-Type-Options: nosniff`;
+- `Referrer-Policy: strict-origin-when-cross-origin`;
+- `X-Frame-Options: DENY`;
+- a `Permissions-Policy` disabling camera, microphone, geolocation, payment, and USB access.
+
+The CSP limits scripts and assets to the origins required by the application, allows movie posters from `image.tmdb.org`, and limits frontend connections to the application itself and Supabase. `unsafe-eval` is not allowed. `unsafe-inline` remains enabled only for styles because the current approved UI still uses legitimate inline styles.
 
 ---
 
@@ -922,6 +1014,8 @@ Frontend `.env`:
 VITE_SUPABASE_URL=...
 VITE_SUPABASE_ANON_KEY=...
 ```
+
+Only public client-side values are exposed through `VITE_*`. The frontend does not use `VITE_TMDB_TOKEN`.
 
 GitHub Actions Secrets:
 
@@ -968,6 +1062,9 @@ Letreiro/
 │   ├── App.tsx
 │   ├── App.css
 │   ├── Pages.css
+│   ├── Privacy.tsx
+│   ├── Privacy.css
+│   ├── FooterPrivacy.css
 │   ├── routes.tsx
 │   ├── dateUtils.ts
 │   ├── supabaseClient.ts
@@ -982,17 +1079,43 @@ Letreiro/
 └── README.md
 ```
 
+The Vite-generated `dist/` directory is treated as build output and remains ignored by Git instead of being committed.
+
 ---
 
 ## Security notes
 
-- Do not commit `.env`.
-- Do not commit `node_modules/`.
-- Use the Supabase anonymous key only with properly configured RLS policies.
-- Keep the Supabase `service_role` key server-side only.
-- RLS should prevent unwanted public writes.
+- Do not commit `.env`, `node_modules/`, or `dist/`.
+- The Supabase anonymous key is safe for browser use only because database privileges and RLS limit what `anon` can do.
+- `daily_movies` keeps RLS enabled and exposes only public read access to `anon`.
+- Public write privileges (`INSERT`, `UPDATE`, `DELETE`, `TRUNCATE`, `REFERENCES`, and `TRIGGER`) are revoked from both `anon` and `PUBLIC`.
+- The Supabase `service_role` key stays exclusively in the trusted server-side automation environment.
+- The frontend does not store or use a TMDB API token; movie-selection calls are made by the automation.
+- The Content Security Policy limits scripts, images, and connections to required origins and does not allow `unsafe-eval`.
+- Additional response headers reduce MIME sniffing, unwanted framing, and unnecessary browser permissions/referrer exposure.
 - A unique `tmdb_id` database constraint complements application-level duplicate protection.
-- Code validation and database constraints should be used together.
+- Code validation, RLS, PostgreSQL privileges, and database constraints operate as complementary security layers.
+
+---
+
+## Privacy
+
+The public privacy page is available at:
+
+```text
+/pt-br/privacidade
+```
+
+The current Letreiro privacy scope is intentionally simple and functional:
+
+- game progress, guesses, hints, and theme preference are stored locally in the browser through `localStorage`;
+- Supabase stores the daily challenges, and the frontend reads the records required to display the game;
+- public movie metadata and posters are provided by TMDB;
+- the application is hosted on Vercel;
+- Supabase, TMDB, and Vercel maintain their own privacy policies, and their infrastructure may process technical logs required for operation;
+- no advertising cookies, Google Analytics, or other first-party user analytics/tracking tools were identified in the current codebase.
+
+Letreiro does not require a user account to preserve progress and currently does not synchronize individual game history across devices.
 
 ---
 
