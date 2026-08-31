@@ -1,4 +1,5 @@
 import './SiteFooter.css'
+import './FooterPrivacy.css'
 
 export default function SiteFooter() {
   return (
