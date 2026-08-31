@@ -1,0 +1,10 @@
+.site-footer__privacy {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer__privacy:hover,
+.site-footer__privacy:focus-visible {
+  color: var(--lt-texto);
+}
