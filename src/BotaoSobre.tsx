@@ -1,7 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import './BotaoSobre.css'
 
-const URL_PORTFOLIO = 'https://marcuscamargo-portfolio.vercel.app/'
+const URL_PORTFOLIO = 'https://marcuscamargo-portfolio.mcpt.workers.dev/'
 
 export default function BotaoSobre({ aoAbrir }: { aoAbrir?: () => void }) {
   const [aberto, setAberto] = useState(false)
