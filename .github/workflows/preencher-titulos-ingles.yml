@@ -20,8 +20,11 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Instalar dependências
+      - name: Instalar dependências do projeto
         run: npm ci
+
+      - name: Instalar dependências da migração
+        run: npm install --no-save @supabase/supabase-js axios
 
       - name: Preencher title_english dos filmes existentes
         env:
