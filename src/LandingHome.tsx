@@ -7,26 +7,84 @@ const textos = {
   'pt-br': {
     jogar: 'Jogar',
     comoJogar: 'Como Jogar?',
-    fechar: 'Fechar',
-    tituloModal: 'Como jogar',
+    fechar: 'Entendi, vamos jogar!',
+    tituloModal: 'Como jogar o Letreiro',
     descricao: 'Adivinhe o filme do dia, letra por letra.',
-    regras: [
-      'Digite um palpite com a mesma quantidade de letras do título.',
-      'As cores mostram se cada letra está no lugar certo, na mesma palavra ou em outra parte do título.',
-      'Use as dicas quando precisar e tente descobrir o filme do dia.',
+    idiomaPrincipal: 'Português',
+    idiomaSecundario: 'Brasil',
+    introducao: 'Seu objetivo é descobrir o título do filme do dia. Cada tentativa precisa preencher todo o tabuleiro e respeitar a quantidade de letras de cada palavra.',
+    passos: [
+      {
+        numero: '1',
+        titulo: 'Preencha o título',
+        texto: 'Digite um palpite usando o teclado da tela ou o teclado físico. Cada bloco representa uma palavra do título do filme.',
+      },
+      {
+        numero: '2',
+        titulo: 'Envie sua tentativa',
+        texto: 'Quando todas as casas estiverem preenchidas, pressione ENTER. As palavras digitadas precisam existir no dicionário do jogo.',
+      },
+      {
+        numero: '3',
+        titulo: 'Use as cores',
+        texto: 'Depois de cada tentativa, as cores mostram o quanto cada letra se aproxima do título correto.',
+      },
+      {
+        numero: '4',
+        titulo: 'Peça dicas se precisar',
+        texto: 'Você pode revelar o estúdio, o gênero ou uma versão desfocada do pôster. Quanto mais forte a dica, mais informação ela entrega.',
+      },
     ],
+    cores: {
+      titulo: 'O que cada cor significa?',
+      verde: ['Verde', 'A letra está na posição correta.'],
+      amarelo: ['Amarelo', 'A letra existe e está na mesma palavra, mas em outra posição.'],
+      roxo: ['Roxo', 'A letra existe no título, mas pertence a outra palavra.'],
+      cinza: ['Cinza', 'A letra não está disponível nessa posição do título.'],
+    },
+    exemploTitulo: 'Exemplo de uma tentativa',
+    exemploTexto: 'Misture as pistas de todas as tentativas até encontrar o filme. Não há limite fixo de tentativas.',
   },
   'en-us': {
     jogar: 'Play',
     comoJogar: 'How to Play?',
-    fechar: 'Close',
-    tituloModal: 'How to play',
+    fechar: 'Got it, let’s play!',
+    tituloModal: 'How to play Letreiro',
     descricao: 'Guess the movie of the day, letter by letter.',
-    regras: [
-      'Enter a guess with the same number of letters as the movie title.',
-      'The colors show whether each letter is correct, in the same word, or elsewhere in the title.',
-      'Use hints when you need them and try to discover the movie of the day.',
+    idiomaPrincipal: 'English',
+    idiomaSecundario: 'United States',
+    introducao: 'Your goal is to discover the movie title of the day. Every guess must fill the whole board and match the number of letters in each word.',
+    passos: [
+      {
+        numero: '1',
+        titulo: 'Fill the title',
+        texto: 'Type a guess using the on-screen keyboard or your physical keyboard. Each block represents one word in the movie title.',
+      },
+      {
+        numero: '2',
+        titulo: 'Submit your guess',
+        texto: 'Once every tile is filled, press ENTER. Each word you enter must exist in the game dictionary.',
+      },
+      {
+        numero: '3',
+        titulo: 'Read the colors',
+        texto: 'After each guess, the colors show how close each letter is to the correct movie title.',
+      },
+      {
+        numero: '4',
+        titulo: 'Use hints if needed',
+        texto: 'You can reveal the studio, the genre, or a blurred version of the poster. Stronger hints reveal more information.',
+      },
     ],
+    cores: {
+      titulo: 'What does each color mean?',
+      verde: ['Green', 'The letter is in the correct position.'],
+      amarelo: ['Yellow', 'The letter exists in the same word, but in a different position.'],
+      roxo: ['Purple', 'The letter exists in the title, but belongs to another word.'],
+      cinza: ['Gray', 'The letter is not available in that position of the title.'],
+    },
+    exemploTitulo: 'Example of a guess',
+    exemploTexto: 'Combine the clues from every attempt until you find the movie. There is no fixed attempt limit.',
   },
 } as const
 
@@ -40,7 +98,7 @@ export default function LandingHome() {
   }, [idioma])
 
   const jogar = () => {
-    window.location.assign(idioma === 'en-us' ? '/en-us' : '/pt-br')
+    window.location.assign(`/${idioma}`)
   }
 
   return (
@@ -60,25 +118,31 @@ export default function LandingHome() {
             onClick={() => setIdioma('pt-br')}
             aria-pressed={idioma === 'pt-br'}
           >
-            PT-BR
+            <span className="landing-home__language-code">PT-BR</span>
+            <span className="landing-home__language-copy">
+              <strong>Português</strong>
+              <small>Brasil</small>
+            </span>
+            <span className="landing-home__language-check" aria-hidden="true">✓</span>
           </button>
-          <span aria-hidden="true">/</span>
+
           <button
             type="button"
             className={idioma === 'en-us' ? 'is-active' : ''}
             onClick={() => setIdioma('en-us')}
             aria-pressed={idioma === 'en-us'}
           >
-            EN-US
+            <span className="landing-home__language-code">EN-US</span>
+            <span className="landing-home__language-copy">
+              <strong>English</strong>
+              <small>United States</small>
+            </span>
+            <span className="landing-home__language-check" aria-hidden="true">✓</span>
           </button>
         </div>
 
         <div className="landing-home__actions">
-          <button
-            type="button"
-            className="landing-home__play"
-            onClick={jogar}
-          >
+          <button type="button" className="landing-home__play" onClick={jogar}>
             {t.jogar}
           </button>
           <button
@@ -100,11 +164,76 @@ export default function LandingHome() {
             aria-labelledby="landing-how-title"
             onMouseDown={(evento) => evento.stopPropagation()}
           >
-            <h2 id="landing-how-title">{t.tituloModal}</h2>
-            <ol>
-              {t.regras.map((regra) => <li key={regra}>{regra}</li>)}
-            </ol>
-            <button type="button" onClick={() => setMostrarComoJogar(false)}>{t.fechar}</button>
+            <div className="landing-home__modal-head">
+              <div>
+                <span className="landing-home__modal-kicker">🎬 LETREIRO</span>
+                <h2 id="landing-how-title">{t.tituloModal}</h2>
+              </div>
+              <button
+                type="button"
+                className="landing-home__modal-x"
+                onClick={() => setMostrarComoJogar(false)}
+                aria-label={idioma === 'pt-br' ? 'Fechar' : 'Close'}
+              >
+                ×
+              </button>
+            </div>
+
+            <p className="landing-home__modal-intro">{t.introducao}</p>
+
+            <div className="landing-home__steps">
+              {t.passos.map((passo) => (
+                <article className="landing-home__step" key={passo.numero}>
+                  <span className="landing-home__step-number">{passo.numero}</span>
+                  <div>
+                    <h3>{passo.titulo}</h3>
+                    <p>{passo.texto}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+
+            <section className="landing-home__example" aria-label={t.exemploTitulo}>
+              <div className="landing-home__example-copy">
+                <h3>{t.exemploTitulo}</h3>
+                <p>{t.exemploTexto}</p>
+              </div>
+              <div className="landing-home__mini-board" aria-hidden="true">
+                <div className="landing-home__mini-word">
+                  <span className="mini-tile is-green">M</span>
+                  <span className="mini-tile is-yellow">O</span>
+                  <span className="mini-tile is-purple">V</span>
+                  <span className="mini-tile is-gray">I</span>
+                  <span className="mini-tile">E</span>
+                </div>
+              </div>
+            </section>
+
+            <section className="landing-home__legend">
+              <h3>{t.cores.titulo}</h3>
+              <div className="landing-home__legend-grid">
+                <div className="landing-home__legend-item">
+                  <span className="mini-tile is-green">A</span>
+                  <p><strong>{t.cores.verde[0]}</strong><span>{t.cores.verde[1]}</span></p>
+                </div>
+                <div className="landing-home__legend-item">
+                  <span className="mini-tile is-yellow">A</span>
+                  <p><strong>{t.cores.amarelo[0]}</strong><span>{t.cores.amarelo[1]}</span></p>
+                </div>
+                <div className="landing-home__legend-item">
+                  <span className="mini-tile is-purple">A</span>
+                  <p><strong>{t.cores.roxo[0]}</strong><span>{t.cores.roxo[1]}</span></p>
+                </div>
+                <div className="landing-home__legend-item">
+                  <span className="mini-tile is-gray">A</span>
+                  <p><strong>{t.cores.cinza[0]}</strong><span>{t.cores.cinza[1]}</span></p>
+                </div>
+              </div>
+            </section>
+
+            <button type="button" className="landing-home__modal-close" onClick={() => setMostrarComoJogar(false)}>
+              {t.fechar}
+            </button>
           </section>
         </div>
       )}
