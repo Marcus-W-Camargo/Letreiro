@@ -198,12 +198,48 @@ async function rodarAutomacaoDiaria() {
           ? detalhes.genres.map(g => g.name)
           : ['Cinema'];
 
+      let tituloIngles = higienizarTitulo(
+        filmeSorteado.original_title || filmeSorteado.title
+      );
+      let categoriesIngles = categoriesLista;
+
+      try {
+        const urlDetalhesIngles =
+          `https://api.themoviedb.org/3/movie/${filmeSorteado.id}` +
+          `?language=en-US`;
+
+        const respostaDetalhesIngles = await axios.get(
+          urlDetalhesIngles,
+          configuracaoAxios
+        );
+
+        const detalhesIngles = respostaDetalhesIngles.data;
+        const tituloRecebidoEmIngles = higienizarTitulo(
+          detalhesIngles.title || detalhesIngles.original_title || ''
+        );
+
+        if (tituloRecebidoEmIngles) {
+          tituloIngles = tituloRecebidoEmIngles;
+        }
+
+        if (detalhesIngles.genres && detalhesIngles.genres.length > 0) {
+          categoriesIngles = detalhesIngles.genres.map(g => g.name);
+        }
+      } catch (erroIngles) {
+        console.warn(
+          `Aviso: não foi possível consultar os dados en-US do filme ${filmeSorteado.id}. O desafio PT-BR será preservado com dados de fallback para inglês.`,
+          erroIngles.response?.data || erroIngles.message
+        );
+      }
+
       const novoDesafioDiario = {
         release_date: hoje,
         tmdb_id: filmeSorteado.id,
         title_brazil: tituloHigienizado,
+        title_english: tituloIngles,
         studio: estudioNome,
         categories: categoriesLista,
+        categories_english: categoriesIngles,
 
         poster_url: filmeSorteado.poster_path
           ? `https://image.tmdb.org/t/p/w500${filmeSorteado.poster_path}`
@@ -216,7 +252,7 @@ async function rodarAutomacaoDiaria() {
 
       if (!error) {
         console.log(
-          `Sucesso! Desafio ${novoDesafioDiario.title_brazil} salvo para ${hoje}.`
+          `Sucesso! Desafio ${novoDesafioDiario.title_brazil} salvo para ${hoje} com dados PT-BR e EN-US.`
         );
         return;
       }
