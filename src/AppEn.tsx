@@ -131,7 +131,7 @@ export default function AppEn({ dataDesafio, onDesafioAusente }: AppEnProps) {
         setCarregandoFilme(true)
         const { data, error } = await supabase
           .from('daily_movies')
-          .select('title_english, studio, categories_english, poster_url')
+          .select('title_english, studio, categories_english, poster_url_english, poster_url')
           .eq('release_date', dataDesafioBanco)
           .maybeSingle()
 
@@ -144,7 +144,7 @@ export default function AppEn({ dataDesafio, onDesafioAusente }: AppEnProps) {
             genero: Array.isArray(data.categories_english)
               ? data.categories_english.join(', ')
               : (data.categories_english || 'Not provided'),
-            posterUrl: data.poster_url || '',
+            posterUrl: data.poster_url_english || data.poster_url || '',
           })
         } else {
           console.warn(`No English challenge found for date: ${dataDesafioBanco}`)
