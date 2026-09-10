@@ -127,7 +127,7 @@ Assim, uma informação menos precisa não substitui uma descoberta mais forte j
 
 ## 📚 Validação de palavras
 
-As tentativas são verificadas contra dicionários locais próprios da aplicação.
+As tentativas são verificadas contra bases de validação próprias da aplicação.
 
 Na experiência em português, a base inclui arquivos como:
 
@@ -137,7 +137,7 @@ src/paises.txt
 src/cidades.txt
 ```
 
-A versão em inglês utiliza sua própria base de validação.
+A versão em inglês utiliza um léxico próprio de palavras comuns definido no frontend e o enriquece dinamicamente com palavras dos títulos em inglês já registrados em `daily_movies` no Supabase.
 
 As entradas são normalizadas e deduplicadas em memória. As palavras que fazem parte da resposta do dia também são incorporadas ao conjunto de validação para impedir que um título correto seja recusado apenas por ausência no léxico base.
 
@@ -167,6 +167,8 @@ A automação roda em **Node.js 22** e utiliza:
 O workflow executa várias janelas de tentativa próximas à meia-noite no horário de Brasília e possui uma execução adicional de segurança.
 
 O script é **idempotente por data**: se o desafio do dia já existe, ele encerra sem criar outro.
+
+Para a internacionalização dos desafios históricos, o repositório também mantém o workflow `preencher-titulos-ingles.yml` e o script `scripts/preencherTitulosIngles.js`, responsáveis por complementar registros anteriores com dados em inglês sem depender da automação diária dos novos desafios.
 
 ---
 
@@ -432,7 +434,8 @@ Rotas de data inválidas, inexistentes ou futuras são tratadas pela aplicação
 ```text
 .
 ├── .github/workflows/
-│   └── letreiro-cron.yml        # Automação diária
+│   ├── letreiro-cron.yml                 # Automação diária
+│   └── preencher-titulos-ingles.yml      # Backfill dos desafios históricos em inglês
 │
 ├── public/
 │   ├── LetreiroIco.png          # Ícone público
@@ -441,7 +444,8 @@ Rotas de data inválidas, inexistentes ou futuras são tratadas pela aplicação
 │   └── sitemap.xml              # Mapa do site
 │
 ├── scripts/
-│   └── sortearFilme.js          # Seleção e inserção do filme em PT-BR e EN-US
+│   ├── sortearFilme.js                   # Seleção e inserção do filme em PT-BR e EN-US
+│   └── preencherTitulosIngles.js         # Complementa registros históricos em EN-US
 │
 ├── src/
 │   ├── assets/
@@ -452,6 +456,7 @@ Rotas de data inválidas, inexistentes ou futuras são tratadas pela aplicação
 │   ├── routes.tsx               # Páginas e rotas PT-BR
 │   ├── routesEn.tsx             # Páginas e rotas EN-US
 │   ├── supabaseClient.ts        # Cliente público
+│   ├── useDicionarioEn.ts       # Léxico e enriquecimento da validação EN-US
 │   ├── palavras_base.txt        # Léxico PT-BR
 │   ├── paises.txt
 │   └── cidades.txt
@@ -536,7 +541,7 @@ https://letreiro.marcuscamargo-portfolio.com.br/
 **Entrada secundária:**  
 https://letreiro.mcpt.workers.dev/
 
-O frontend é publicado como SPA no **Cloudflare Workers**. O deploy de código acompanha a branch principal conectada ao Cloudflare, enquanto o `wrangler.jsonc` mantém a configuração de assets, fallback de SPA e domínio personalizado.
+O frontend é publicado como SPA no **Cloudflare Workers**. A configuração de deploy é versionada em `wrangler.jsonc`, que define os assets, o fallback de SPA e o domínio personalizado utilizados pela aplicação.
 
 A URL secundária `workers.dev` permanece ativa como porta de entrada curta e redireciona para o domínio principal com status HTTP `308`, preservando rotas como `/pt-br` e `/en-us`.
 
