@@ -1,4 +1,4 @@
-name: Preencher títulos em inglês
+name: Preencher dados em inglês
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  preencher-titulos-ingles:
+  preencher-dados-ingles:
     runs-on: ubuntu-latest
 
     steps:
@@ -26,7 +26,7 @@ jobs:
       - name: Instalar dependências da migração
         run: npm install --no-save @supabase/supabase-js axios
 
-      - name: Preencher title_english dos filmes existentes
+      - name: Preencher dados em inglês dos filmes existentes
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
