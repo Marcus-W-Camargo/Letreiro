@@ -1,0 +1,55 @@
+.landing-controls {
+  position: fixed;
+  top: 12px;
+  left: 16px;
+  right: 16px;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.landing-controls__left,
+.landing-controls__right {
+  pointer-events: auto;
+}
+
+.landing-controls .sobre-container {
+  grid-column: auto;
+  grid-row: auto;
+}
+
+.landing-controls .btn-header {
+  background: var(--lt-tecla);
+  color: var(--lt-texto);
+  border: none;
+  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, transform 0.1s;
+  box-shadow: 0 2px 4px var(--lt-sombra);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.landing-controls .btn-header:hover {
+  background: var(--lt-tecla-acao);
+}
+
+.landing-controls .btn-header:active {
+  transform: scale(0.95);
+}
+
+@media (max-width: 640px) {
+  .landing-controls {
+    top: 10px;
+    left: 12px;
+    right: 12px;
+  }
+}
