@@ -30,27 +30,36 @@ function higienizarTitulo(str) {
     .trim();
 }
 
-async function buscarRegistrosPendentes() {
+async function buscarRegistros() {
   const { data, error } = await supabase
     .from('daily_movies')
-    .select('release_date, tmdb_id, title_brazil, title_english')
-    .is('title_english', null)
+    .select('release_date, tmdb_id, title_brazil, title_english, categories_english')
     .order('release_date', { ascending: true });
 
   if (error) throw error;
   return data || [];
 }
 
-async function buscarTituloIngles(tmdbId) {
+async function buscarDadosIngles(tmdbId) {
   const url = `https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`;
   const resposta = await axios.get(url, configuracaoAxios);
-  return higienizarTitulo(resposta.data?.title || resposta.data?.original_title || '');
+  const detalhes = resposta.data || {};
+
+  const titleEnglish = higienizarTitulo(
+    detalhes.title || detalhes.original_title || '',
+  );
+
+  const categoriesEnglish = Array.isArray(detalhes.genres) && detalhes.genres.length > 0
+    ? detalhes.genres.map((genero) => genero.name).filter(Boolean)
+    : ['Cinema'];
+
+  return { titleEnglish, categoriesEnglish };
 }
 
-async function atualizarTituloIngles(registro, titleEnglish) {
+async function atualizarRegistro(registro, atualizacoes) {
   const { error } = await supabase
     .from('daily_movies')
-    .update({ title_english: titleEnglish })
+    .update(atualizacoes)
     .eq('release_date', registro.release_date)
     .eq('tmdb_id', registro.tmdb_id);
 
@@ -58,9 +67,14 @@ async function atualizarTituloIngles(registro, titleEnglish) {
 }
 
 async function executar() {
-  console.log('Iniciando preenchimento retroativo de title_english...');
+  console.log('Iniciando preenchimento retroativo dos dados em inglês...');
 
-  const registros = await buscarRegistrosPendentes();
+  const todos = await buscarRegistros();
+  const registros = todos.filter((registro) => {
+    const semTitulo = !registro.title_english;
+    const semCategorias = !Array.isArray(registro.categories_english) || registro.categories_english.length === 0;
+    return semTitulo || semCategorias;
+  });
 
   if (registros.length === 0) {
     console.log('Nenhum registro pendente. Nada a fazer.');
@@ -78,18 +92,32 @@ async function executar() {
         throw new Error('Registro sem tmdb_id.');
       }
 
-      const titleEnglish = await buscarTituloIngles(registro.tmdb_id);
+      const { titleEnglish, categoriesEnglish } = await buscarDadosIngles(registro.tmdb_id);
+      const atualizacoes = {};
 
-      if (!titleEnglish) {
-        throw new Error('TMDB não retornou um título inglês válido.');
+      if (!registro.title_english) {
+        if (!titleEnglish) {
+          throw new Error('TMDB não retornou um título inglês válido.');
+        }
+        atualizacoes.title_english = titleEnglish;
       }
 
-      await atualizarTituloIngles(registro, titleEnglish);
+      if (!Array.isArray(registro.categories_english) || registro.categories_english.length === 0) {
+        atualizacoes.categories_english = categoriesEnglish;
+      }
+
+      if (Object.keys(atualizacoes).length === 0) {
+        continue;
+      }
+
+      await atualizarRegistro(registro, atualizacoes);
       atualizados += 1;
 
-      console.log(
-        `OK ${registro.release_date}: ${registro.title_brazil} -> ${titleEnglish}`,
-      );
+      const partes = [];
+      if (atualizacoes.title_english) partes.push(`title_english=${atualizacoes.title_english}`);
+      if (atualizacoes.categories_english) partes.push(`categories_english=[${atualizacoes.categories_english.join(', ')}]`);
+
+      console.log(`OK ${registro.release_date}: ${partes.join(' | ')}`);
     } catch (erro) {
       const mensagem = erro.response?.data?.status_message || erro.message || String(erro);
       falhas.push({
@@ -97,9 +125,7 @@ async function executar() {
         tmdb_id: registro.tmdb_id,
         erro: mensagem,
       });
-      console.error(
-        `FALHA ${registro.release_date} (${registro.tmdb_id}): ${mensagem}`,
-      );
+      console.error(`FALHA ${registro.release_date} (${registro.tmdb_id}): ${mensagem}`);
     }
   }
 
@@ -108,9 +134,7 @@ async function executar() {
   if (falhas.length > 0) {
     console.error(`${falhas.length} registro(s) falharam:`);
     for (const falha of falhas) {
-      console.error(
-        `- ${falha.release_date} | tmdb_id=${falha.tmdb_id} | ${falha.erro}`,
-      );
+      console.error(`- ${falha.release_date} | tmdb_id=${falha.tmdb_id} | ${falha.erro}`);
     }
     process.exit(1);
   }
@@ -118,7 +142,7 @@ async function executar() {
 
 executar().catch((erro) => {
   console.error(
-    'Falha ao preencher títulos em inglês:',
+    'Falha ao preencher dados em inglês:',
     erro.response?.data || erro.message || erro,
   );
   process.exit(1);
