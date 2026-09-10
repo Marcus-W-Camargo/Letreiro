@@ -29,9 +29,21 @@ if (!rootElement) {
 
 const caminho = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/'
 
-const definirMeta = (seletor: string, atributo: 'content' | 'href', valor: string) => {
-  const elemento = document.querySelector(seletor)
-  if (elemento) elemento.setAttribute(atributo, valor)
+const definirMeta = (seletor: string, valor: string) => {
+  const elemento = document.querySelector<HTMLMetaElement>(seletor)
+  if (elemento) elemento.setAttribute('content', valor)
+}
+
+const definirCanonical = (valor: string) => {
+  let canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')
+
+  if (!canonical) {
+    canonical = document.createElement('link')
+    canonical.setAttribute('rel', 'canonical')
+    document.head.appendChild(canonical)
+  }
+
+  canonical.setAttribute('href', valor)
 }
 
 const origem = 'https://letreiro.marcuscamargo-portfolio.com.br'
@@ -63,14 +75,14 @@ const descricao = ehPrivacidade
 
 document.documentElement.lang = ehEn ? 'en-US' : 'pt-BR'
 document.title = titulo
-definirMeta('meta[name="description"]', 'content', descricao)
-definirMeta('link[rel="canonical"]', 'href', urlCanonica)
-definirMeta('meta[property="og:title"]', 'content', titulo)
-definirMeta('meta[property="og:description"]', 'content', descricao)
-definirMeta('meta[property="og:url"]', 'content', urlCanonica)
-definirMeta('meta[property="og:locale"]', 'content', ehEn ? 'en_US' : 'pt_BR')
-definirMeta('meta[name="twitter:title"]', 'content', titulo)
-definirMeta('meta[name="twitter:description"]', 'content', descricao)
+definirMeta('meta[name="description"]', descricao)
+definirCanonical(urlCanonica)
+definirMeta('meta[property="og:title"]', titulo)
+definirMeta('meta[property="og:description"]', descricao)
+definirMeta('meta[property="og:url"]', urlCanonica)
+definirMeta('meta[property="og:locale"]', ehEn ? 'en_US' : 'pt_BR')
+definirMeta('meta[name="twitter:title"]', titulo)
+definirMeta('meta[name="twitter:description"]', descricao)
 
 const conteudo =
   caminho === '/'
