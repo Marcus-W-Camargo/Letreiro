@@ -5,6 +5,7 @@ import RoutesEn from './routesEn.tsx'
 import Privacy from './Privacy.tsx'
 import PrivacyEn from './PrivacyEn.tsx'
 import LandingHome from './LandingHome.tsx'
+import LandingControls from './LandingControls.tsx'
 import SiteFooter from './SiteFooter.tsx'
 import './GameRoutes.css'
 import './Tooltips.css'
@@ -29,7 +30,7 @@ if (!rootElement) {
 const caminho = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/'
 const conteudo =
   caminho === '/'
-    ? <LandingHome />
+    ? <><LandingControls /><LandingHome /></>
     : caminho === '/pt-br/privacidade'
       ? <Privacy />
       : caminho === '/en-us/privacy'
