@@ -27,6 +27,24 @@ function criarChaveTitulo(str) {
   return higienizarTitulo(str).replace(/\s+/g, "");
 }
 
+function montarUrlPoster(filePath) {
+  return filePath ? `https://image.tmdb.org/t/p/w500${filePath}` : '';
+}
+
+function escolherPosterIngles(posters, posterFallback) {
+  if (!Array.isArray(posters) || posters.length === 0) {
+    return montarUrlPoster(posterFallback);
+  }
+
+  const posterIngles = posters.find((poster) => poster?.iso_639_1 === 'en' && poster?.file_path);
+  if (posterIngles) return montarUrlPoster(posterIngles.file_path);
+
+  const posterSemIdioma = posters.find((poster) => poster?.iso_639_1 === null && poster?.file_path);
+  if (posterSemIdioma) return montarUrlPoster(posterSemIdioma.file_path);
+
+  return montarUrlPoster(posterFallback || posters.find((poster) => poster?.file_path)?.file_path);
+}
+
 async function buscarFilmesJaUsados() {
   const idsJaUsados = new Set();
   const titulosJaUsados = new Set();
@@ -202,18 +220,22 @@ async function rodarAutomacaoDiaria() {
         filmeSorteado.original_title || filmeSorteado.title
       );
       let categoriesIngles = categoriesLista;
+      let posterUrlIngles = montarUrlPoster(filmeSorteado.poster_path);
 
       try {
-        const urlDetalhesIngles =
-          `https://api.themoviedb.org/3/movie/${filmeSorteado.id}` +
-          `?language=en-US`;
-
-        const respostaDetalhesIngles = await axios.get(
-          urlDetalhesIngles,
-          configuracaoAxios
-        );
+        const [respostaDetalhesIngles, respostaImagensIngles] = await Promise.all([
+          axios.get(
+            `https://api.themoviedb.org/3/movie/${filmeSorteado.id}?language=en-US`,
+            configuracaoAxios
+          ),
+          axios.get(
+            `https://api.themoviedb.org/3/movie/${filmeSorteado.id}/images?include_image_language=en,null`,
+            configuracaoAxios
+          ),
+        ]);
 
         const detalhesIngles = respostaDetalhesIngles.data;
+        const imagensIngles = respostaImagensIngles.data;
         const tituloRecebidoEmIngles = higienizarTitulo(
           detalhesIngles.title || detalhesIngles.original_title || ''
         );
@@ -225,6 +247,11 @@ async function rodarAutomacaoDiaria() {
         if (detalhesIngles.genres && detalhesIngles.genres.length > 0) {
           categoriesIngles = detalhesIngles.genres.map(g => g.name);
         }
+
+        posterUrlIngles = escolherPosterIngles(
+          imagensIngles?.posters,
+          detalhesIngles?.poster_path || filmeSorteado.poster_path
+        );
       } catch (erroIngles) {
         console.warn(
           `Aviso: não foi possível consultar os dados en-US do filme ${filmeSorteado.id}. O desafio PT-BR será preservado com dados de fallback para inglês.`,
@@ -240,10 +267,8 @@ async function rodarAutomacaoDiaria() {
         studio: estudioNome,
         categories: categoriesLista,
         categories_english: categoriesIngles,
-
-        poster_url: filmeSorteado.poster_path
-          ? `https://image.tmdb.org/t/p/w500${filmeSorteado.poster_path}`
-          : ''
+        poster_url: montarUrlPoster(filmeSorteado.poster_path),
+        poster_url_english: posterUrlIngles,
       };
 
       const { error } = await supabase
