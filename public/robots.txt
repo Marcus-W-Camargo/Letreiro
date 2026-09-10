@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://letreiro.marcuscamargo-portfolio.com.br/sitemap.xml
