@@ -1,7 +1,9 @@
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import Routes from './routes.tsx'
+import RoutesEn from './routesEn.tsx'
 import Privacy from './Privacy.tsx'
+import PrivacyEn from './PrivacyEn.tsx'
 import LandingHome from './LandingHome.tsx'
 import SiteFooter from './SiteFooter.tsx'
 import './GameRoutes.css'
@@ -30,7 +32,11 @@ const conteudo =
     ? <LandingHome />
     : caminho === '/pt-br/privacidade'
       ? <Privacy />
-      : <Routes />
+      : caminho === '/en-us/privacy'
+        ? <PrivacyEn />
+        : caminho === '/en-us' || caminho.startsWith('/en-us/')
+          ? <RoutesEn />
+          : <Routes />
 
 createRoot(rootElement).render(
   <StrictMode>
