@@ -34,15 +34,13 @@ export default function LandingHome() {
   const [idioma, setIdioma] = useState<Idioma>('pt-br')
   const [mostrarComoJogar, setMostrarComoJogar] = useState(false)
   const t = textos[idioma]
-  const ingles = idioma === 'en-us'
 
   useEffect(() => {
     document.documentElement.lang = idioma
   }, [idioma])
 
   const jogar = () => {
-    if (ingles) return
-    window.location.assign('/pt-br')
+    window.location.assign(idioma === 'en-us' ? '/en-us' : '/pt-br')
   }
 
   return (
@@ -80,8 +78,6 @@ export default function LandingHome() {
             type="button"
             className="landing-home__play"
             onClick={jogar}
-            disabled={ingles}
-            aria-describedby={ingles ? 'landing-english-status' : undefined}
           >
             {t.jogar}
           </button>
@@ -93,12 +89,6 @@ export default function LandingHome() {
             {t.comoJogar}
           </button>
         </div>
-
-        {ingles && (
-          <p className="landing-home__status" id="landing-english-status">
-            English version coming next.
-          </p>
-        )}
       </section>
 
       {mostrarComoJogar && (
