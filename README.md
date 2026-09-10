@@ -11,30 +11,41 @@
 [![Vite](https://img.shields.io/badge/Vite-8.2-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-3FCF8E?logo=supabase&logoColor=white)](https://supabase.com/)
 [![TMDB](https://img.shields.io/badge/TMDB-Movie%20Data-01B4E4)](https://www.themoviedb.org/)
-[![Vercel](https://img.shields.io/badge/Vercel-Production-000000?logo=vercel&logoColor=white)](https://vercel.com/)
+[![Cloudflare](https://img.shields.io/badge/Cloudflare-Production-F38020?logo=cloudflare&logoColor=white)](https://www.cloudflare.com/)
 [![Daily Automation](https://github.com/Marcus-W-Camargo/Letreiro/actions/workflows/letreiro-cron.yml/badge.svg)](https://github.com/Marcus-W-Camargo/Letreiro/actions/workflows/letreiro-cron.yml)
 
-🌐 **Jogar:** https://letreiro-cine-puzzle.vercel.app/pt-br
+🌐 **Jogar:** https://letreiro.marcuscamargo-portfolio.com.br/
 
 ---
 
 ## Sobre o projeto
 
-**Letreiro** é um jogo diário de descoberta de filmes.
+**Letreiro** é um jogo diário de descoberta de filmes, disponível em **português do Brasil** e **inglês dos Estados Unidos**.
 
-A cada dia, um filme é selecionado automaticamente, processado e armazenado no Supabase. O título se transforma em um tabuleiro com um quadrado para cada letra, e o jogador precisa descobrir a resposta utilizando as cores de cada tentativa e dicas progressivas.
+A cada dia, um filme é selecionado automaticamente, processado em PT-BR e EN-US e armazenado no Supabase. O título se transforma em um tabuleiro com um quadrado para cada letra, e o jogador precisa descobrir a resposta utilizando as cores de cada tentativa e dicas progressivas.
 
 O projeto combina três partes principais:
 
 1. **jogo no navegador**;
-2. **banco de desafios diários**;
+2. **banco de desafios diários bilíngues**;
 3. **automação que publica um novo filme sem depender de cadastro manual**.
 
-A experiência também inclui calendário de partidas anteriores, persistência independente por data, teclado virtual e físico, temas claro e escuro e navegação responsiva.
+A experiência também inclui tela inicial de escolha de idioma, calendário de partidas anteriores, persistência independente por idioma e data, teclado virtual e físico, temas claro e escuro, páginas de privacidade localizadas e navegação responsiva.
 
 ---
 
 ## ✨ Principais funcionalidades
+
+### 🌎 Experiência bilíngue
+
+A tela inicial permite escolher entre **PT-BR** e **EN-US** antes de entrar no jogo.
+
+As duas versões compartilham o mesmo filme diário por `tmdb_id`, mas utilizam conteúdo localizado quando disponível:
+
+- título em português e inglês;
+- gêneros localizados;
+- poster localizado para inglês quando o TMDB disponibiliza uma versão apropriada;
+- interface, calendário, mensagens, tooltips e Política de Privacidade próprios de cada idioma.
 
 ### 🎯 Desafio diário
 
@@ -53,21 +64,23 @@ O jogador pode:
 
 ### 🗓️ Histórico por data
 
-O jogo permite abrir desafios anteriores por rota, mantendo progresso separado para cada data.
+O jogo permite abrir desafios anteriores por rota, mantendo progresso separado para cada idioma e data.
 
-Formato de rota:
+Formatos de rota:
 
 ```text
 /pt-br/DD-MM-AA
+/en-us/DD-MM-AA
 ```
 
-Exemplo:
+Exemplos:
 
 ```text
 /pt-br/27-08-26
+/en-us/27-08-26
 ```
 
-O armazenamento local utiliza uma chave própria por desafio.
+O armazenamento local utiliza uma chave própria por desafio e idioma.
 
 ### 💡 Dicas progressivas
 
@@ -84,6 +97,8 @@ As dicas utilizadas fazem parte do progresso salvo da partida.
 ### 🌗 Tema claro e escuro
 
 A interface pode alternar entre temas claro e escuro e preserva a preferência do jogador localmente.
+
+Os controles de **Sobre / About** e **Tema / Theme** também estão disponíveis na tela inicial de escolha de idioma, mantendo o mesmo padrão visual do restante da aplicação.
 
 ---
 
@@ -112,7 +127,9 @@ Assim, uma informação menos precisa não substitui uma descoberta mais forte j
 
 ## 📚 Validação de palavras
 
-As tentativas são verificadas contra um dicionário local construído a partir de:
+As tentativas são verificadas contra dicionários locais próprios da aplicação.
+
+Na experiência em português, a base inclui arquivos como:
 
 ```text
 src/palavras_base.txt
@@ -120,9 +137,9 @@ src/paises.txt
 src/cidades.txt
 ```
 
-As entradas são normalizadas e deduplicadas em memória.
+A versão em inglês utiliza sua própria base de validação.
 
-As palavras que fazem parte da resposta do dia também são incorporadas ao conjunto de validação para impedir que um título correto seja recusado apenas por ausência no léxico base.
+As entradas são normalizadas e deduplicadas em memória. As palavras que fazem parte da resposta do dia também são incorporadas ao conjunto de validação para impedir que um título correto seja recusado apenas por ausência no léxico base.
 
 ---
 
@@ -176,11 +193,21 @@ Também são aplicadas regras próprias:
 - descarte de títulos equivalentes já utilizados;
 - até 60 tentativas para encontrar um candidato válido.
 
-Após escolher um filme, uma segunda consulta recupera:
+Após escolher um filme, a automação recupera os dados em PT-BR e também consulta dados em EN-US para preparar o mesmo desafio nos dois idiomas.
 
-- produtora;
-- gêneros;
-- poster.
+São armazenados, entre outros dados:
+
+```text
+tmdb_id
+title_brazil
+title_english
+studio
+categories
+categories_english
+poster_url
+poster_url_english
+release_date
+```
 
 ---
 
@@ -242,12 +269,13 @@ Isso mantém o tabuleiro previsível e compatível com a lógica de palavras.
 
 ## 🧠 Arquitetura
 
-O projeto separa claramente frontend e automação.
+O projeto separa claramente frontend, automação e entrega em produção.
 
 ### Frontend
 
 Responsável por:
 
+- escolher idioma;
 - carregar o desafio da data;
 - renderizar o tabuleiro;
 - receber entrada do jogador;
@@ -256,7 +284,8 @@ Responsável por:
 - controlar dicas;
 - manter progresso local;
 - exibir histórico e calendário;
-- controlar tema.
+- controlar tema;
+- atualizar metadados SEO conforme a rota e o idioma.
 
 O frontend utiliza apenas credenciais públicas apropriadas do Supabase.
 
@@ -267,15 +296,33 @@ Responsável por:
 - acessar a API do TMDB;
 - consultar filmes já utilizados;
 - selecionar um candidato;
-- buscar detalhes;
+- buscar dados PT-BR e EN-US;
 - impedir repetição;
 - inserir o desafio diário.
 
 Credenciais administrativas permanecem restritas ao ambiente do GitHub Actions.
 
+### Produção
+
+O build de produção é gerado com Vite e publicado no **Cloudflare Workers**, com assets estáticos e fallback de SPA configurados pelo Wrangler.
+
+O domínio principal é:
+
+```text
+https://letreiro.marcuscamargo-portfolio.com.br/
+```
+
+A URL secundária do Workers:
+
+```text
+https://letreiro.mcpt.workers.dev/
+```
+
+redireciona para o domínio principal preservando o caminho solicitado.
+
 ---
 
-## 🔒 Segurança
+## 🔒 Segurança e privacidade
 
 A arquitetura evita expor credenciais administrativas no navegador.
 
@@ -286,9 +333,44 @@ Princípios centrais:
 - leitura pública do desafio separada da escrita administrativa;
 - secrets armazenados no GitHub Actions;
 - prevenção de duplicação no código e no banco;
-- nenhum login obrigatório para preservar progresso do jogador.
+- nenhum login obrigatório para preservar progresso do jogador;
+- páginas de Política de Privacidade em PT-BR e EN-US.
 
 A tabela `daily_movies` deve manter políticas que permitam leitura pública necessária ao jogo sem conceder escrita ao cliente anônimo.
+
+---
+
+## 🔎 SEO e descoberta
+
+O projeto possui uma base de SEO técnico preparada para indexação e compartilhamento.
+
+Entre os recursos atuais estão:
+
+- `title` e `description` localizados;
+- canonical por rota principal;
+- `hreflang` para PT-BR, EN-US e `x-default`;
+- Open Graph;
+- Twitter Card;
+- `robots.txt`;
+- `sitemap.xml`;
+- dados estruturados JSON-LD como `WebSite` e `WebApplication`;
+- metadados de idioma atualizados conforme a rota.
+
+O sitemap público está disponível em:
+
+```text
+https://letreiro.marcuscamargo-portfolio.com.br/sitemap.xml
+```
+
+---
+
+## 📢 Monetização
+
+A aplicação já possui a integração base com **Google AdSense** preparada no frontend.
+
+A estratégia prevista prioriza anúncios automáticos fora da área central do jogo, com foco em preservar a jogabilidade e reduzir risco de cliques acidentais.
+
+O código do AdSense é carregado no site com preferência para anúncio âncora inferior. A ativação e exibição efetiva dos formatos dependem da configuração e aprovação no painel do Google AdSense.
 
 ---
 
@@ -296,14 +378,14 @@ A tabela `daily_movies` deve manter políticas que permitam leitura pública nec
 
 O progresso não exige conta.
 
-Cada data utiliza uma chave independente no `localStorage`, permitindo que o jogador:
+Cada idioma e data utilizam chaves independentes no `localStorage`, permitindo que o jogador:
 
 - feche o navegador;
 - retorne mais tarde;
 - mantenha tentativas;
 - preserve dicas;
 - mantenha o estado da partida;
-- acompanhe jogos diferentes sem misturar progresso.
+- acompanhe jogos diferentes sem misturar progresso entre datas ou idiomas.
 
 O projeto não depende do Supabase para salvar o estado individual de cada jogador.
 
@@ -313,11 +395,15 @@ O projeto não depende do Supabase para salvar o estado individual de cada jogad
 
 | Rota | Função |
 | --- | --- |
-| `/` | Redirecionamento inicial |
-| `/pt-br` | Desafio atual |
-| `/pt-br/selecdata` | Calendário |
-| `/pt-br/DD-MM-AA` | Desafio de uma data |
-| `/pt-br/privacidade` | Política de Privacidade |
+| `/` | Seleção de idioma |
+| `/pt-br` | Página inicial em português |
+| `/pt-br/selecdata` | Calendário em português |
+| `/pt-br/DD-MM-AA` | Desafio de uma data em português |
+| `/pt-br/privacidade` | Política de Privacidade em português |
+| `/en-us` | Página inicial em inglês |
+| `/en-us/selectdate` | Calendário em inglês |
+| `/en-us/DD-MM-AA` | Desafio de uma data em inglês |
+| `/en-us/privacy` | Política de Privacidade em inglês |
 
 Rotas de data inválidas, inexistentes ou futuras são tratadas pela aplicação.
 
@@ -335,8 +421,9 @@ Rotas de data inválidas, inexistentes ou futuras são tratadas pela aplicação
 | Automação | GitHub Actions | Execução agendada |
 | Runtime da automação | Node.js 22 | Script de sorteio |
 | HTTP da automação | Axios | Comunicação com TMDB |
-| Persistência do jogador | localStorage | Progresso por data |
-| Deploy | Vercel | Hospedagem da SPA |
+| Persistência do jogador | localStorage | Progresso por idioma e data |
+| Deploy | Cloudflare Workers | Hospedagem da SPA e domínio personalizado |
+| Configuração de deploy | Wrangler | Assets, SPA fallback, domínio e Worker |
 
 ---
 
@@ -345,23 +432,32 @@ Rotas de data inválidas, inexistentes ou futuras são tratadas pela aplicação
 ```text
 .
 ├── .github/workflows/
-│   └── letreiro-cron.yml       # Automação diária
+│   └── letreiro-cron.yml        # Automação diária
 │
 ├── public/
-│   └── LetreiroIco.png
+│   ├── LetreiroIco.png          # Ícone público
+│   ├── favicon.svg
+│   ├── robots.txt               # Regras de rastreamento
+│   └── sitemap.xml              # Mapa do site
 │
 ├── scripts/
-│   └── sortearFilme.js          # Seleção e inserção do filme
+│   └── sortearFilme.js          # Seleção e inserção do filme em PT-BR e EN-US
 │
 ├── src/
 │   ├── assets/
-│   ├── App.tsx                  # Jogo
-│   ├── routes.tsx               # Páginas e rotas
+│   ├── App.tsx                  # Jogo PT-BR
+│   ├── AppEn.tsx                # Jogo EN-US
+│   ├── LandingHome.tsx          # Seleção inicial de idioma
+│   ├── LandingControls.tsx      # Sobre/About e Tema/Theme da landing
+│   ├── routes.tsx               # Páginas e rotas PT-BR
+│   ├── routesEn.tsx             # Páginas e rotas EN-US
 │   ├── supabaseClient.ts        # Cliente público
-│   ├── palavras_base.txt        # Léxico
+│   ├── palavras_base.txt        # Léxico PT-BR
 │   ├── paises.txt
 │   └── cidades.txt
 │
+├── worker.js                    # Redirect workers.dev e entrega dos assets
+├── wrangler.jsonc               # Configuração do Cloudflare Worker
 ├── package.json
 └── README.md
 ```
@@ -399,7 +495,20 @@ npm run build
 
 ---
 
-## 🔑 Automação local
+## 🔑 Variáveis de ambiente
+
+### Frontend
+
+O build do frontend utiliza variáveis públicas do Supabase:
+
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
+
+Essas variáveis são configuradas no ambiente de build da hospedagem.
+
+### Automação
 
 O script de sorteio depende de credenciais de servidor:
 
@@ -411,7 +520,7 @@ TMDB_API_KEY
 
 Essas credenciais **não devem** ser adicionadas ao frontend nem versionadas no repositório.
 
-A automação é executada com:
+A automação pode ser executada com:
 
 ```bash
 node scripts/sortearFilme.js
@@ -422,11 +531,16 @@ node scripts/sortearFilme.js
 ## 🚀 Produção
 
 **Aplicação:**  
-https://letreiro-cine-puzzle.vercel.app/pt-br
+https://letreiro.marcuscamargo-portfolio.com.br/
 
-O frontend é publicado como SPA na Vercel.
+**Entrada secundária:**  
+https://letreiro.mcpt.workers.dev/
 
-O conteúdo diário, entretanto, não depende de um redeploy do frontend: o GitHub Actions cria o novo registro diretamente no Supabase e a aplicação consulta o desafio correspondente à data.
+O frontend é publicado como SPA no **Cloudflare Workers**. O deploy de código acompanha a branch principal conectada ao Cloudflare, enquanto o `wrangler.jsonc` mantém a configuração de assets, fallback de SPA e domínio personalizado.
+
+A URL secundária `workers.dev` permanece ativa como porta de entrada curta e redireciona para o domínio principal com status HTTP `308`, preservando rotas como `/pt-br` e `/en-us`.
+
+O conteúdo diário não depende de um redeploy do frontend: o GitHub Actions cria o novo registro diretamente no Supabase e a aplicação consulta o desafio correspondente à data.
 
 Essa separação permite atualizar o jogo diariamente sem reconstruir ou publicar novamente o site.
 
@@ -451,7 +565,7 @@ Desenvolvido por **Marcus Camargo**.
 https://github.com/Marcus-W-Camargo
 
 **Portfólio:**  
-https://marcuscamargo-portfolio.mcpt.workers.dev/
+https://marcuscamargo-portfolio.com.br/
 
 ---
 
