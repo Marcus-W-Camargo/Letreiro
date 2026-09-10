@@ -2,7 +2,7 @@
 <html lang="pt-br">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/src/assets/LetreiroIco.png" />
+    <link rel="icon" type="image/png" href="/LetreiroIco.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="Letreiro é um jogo diário de filmes: descubra o título do filme letra por letra, use pistas e volte todos os dias para um novo desafio." />
     <meta name="robots" content="index, follow, max-image-preview:large" />
@@ -11,7 +11,6 @@
     <meta name="application-name" content="Letreiro" />
     <meta name="apple-mobile-web-app-title" content="Letreiro" />
 
-    <link rel="canonical" href="https://letreiro.marcuscamargo-portfolio.com.br/" />
     <link rel="alternate" hreflang="pt-BR" href="https://letreiro.marcuscamargo-portfolio.com.br/pt-br" />
     <link rel="alternate" hreflang="en-US" href="https://letreiro.marcuscamargo-portfolio.com.br/en-us" />
     <link rel="alternate" hreflang="x-default" href="https://letreiro.marcuscamargo-portfolio.com.br/" />
@@ -30,6 +29,37 @@
     <meta name="twitter:title" content="Letreiro — Jogo diário de filmes" />
     <meta name="twitter:description" content="Adivinhe o filme do dia letra por letra, use pistas e descubra um novo desafio todos os dias." />
     <meta name="twitter:image" content="https://letreiro.marcuscamargo-portfolio.com.br/LetreiroIco.png" />
+
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://letreiro.marcuscamargo-portfolio.com.br/#website",
+            "url": "https://letreiro.marcuscamargo-portfolio.com.br/",
+            "name": "Letreiro",
+            "description": "Jogo diário de filmes em português e inglês.",
+            "inLanguage": ["pt-BR", "en-US"]
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://letreiro.marcuscamargo-portfolio.com.br/#app",
+            "url": "https://letreiro.marcuscamargo-portfolio.com.br/",
+            "name": "Letreiro",
+            "applicationCategory": "GameApplication",
+            "operatingSystem": "Any",
+            "browserRequirements": "Requires a modern web browser with JavaScript enabled.",
+            "inLanguage": ["pt-BR", "en-US"],
+            "isAccessibleForFree": true,
+            "offers": {
+              "@type": "Offer",
+              "price": "0"
+            }
+          }
+        ]
+      }
+    </script>
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-4939339143335691" data-overlays="bottom" crossorigin="anonymous"></script>
     <title>Letreiro — Jogo diário de filmes</title>
