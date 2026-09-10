@@ -1,11 +1,4 @@
 {
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/pt-br",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
