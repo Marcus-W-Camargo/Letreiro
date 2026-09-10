@@ -30,10 +30,28 @@ function higienizarTitulo(str) {
     .trim();
 }
 
+function montarUrlPoster(filePath) {
+  return filePath ? `https://image.tmdb.org/t/p/w500${filePath}` : '';
+}
+
+function escolherPosterIngles(posters, posterFallback) {
+  if (!Array.isArray(posters) || posters.length === 0) {
+    return montarUrlPoster(posterFallback);
+  }
+
+  const posterIngles = posters.find((poster) => poster?.iso_639_1 === 'en' && poster?.file_path);
+  if (posterIngles) return montarUrlPoster(posterIngles.file_path);
+
+  const posterSemIdioma = posters.find((poster) => poster?.iso_639_1 === null && poster?.file_path);
+  if (posterSemIdioma) return montarUrlPoster(posterSemIdioma.file_path);
+
+  return montarUrlPoster(posterFallback || posters.find((poster) => poster?.file_path)?.file_path);
+}
+
 async function buscarRegistros() {
   const { data, error } = await supabase
     .from('daily_movies')
-    .select('release_date, tmdb_id, title_brazil, title_english, categories_english')
+    .select('release_date, tmdb_id, title_brazil, title_english, categories_english, poster_url_english')
     .order('release_date', { ascending: true });
 
   if (error) throw error;
@@ -41,9 +59,16 @@ async function buscarRegistros() {
 }
 
 async function buscarDadosIngles(tmdbId) {
-  const url = `https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`;
-  const resposta = await axios.get(url, configuracaoAxios);
-  const detalhes = resposta.data || {};
+  const [respostaDetalhes, respostaImagens] = await Promise.all([
+    axios.get(`https://api.themoviedb.org/3/movie/${tmdbId}?language=en-US`, configuracaoAxios),
+    axios.get(
+      `https://api.themoviedb.org/3/movie/${tmdbId}/images?include_image_language=en,null`,
+      configuracaoAxios,
+    ),
+  ]);
+
+  const detalhes = respostaDetalhes.data || {};
+  const imagens = respostaImagens.data || {};
 
   const titleEnglish = higienizarTitulo(
     detalhes.title || detalhes.original_title || '',
@@ -53,7 +78,9 @@ async function buscarDadosIngles(tmdbId) {
     ? detalhes.genres.map((genero) => genero.name).filter(Boolean)
     : ['Cinema'];
 
-  return { titleEnglish, categoriesEnglish };
+  const posterUrlEnglish = escolherPosterIngles(imagens.posters, detalhes.poster_path);
+
+  return { titleEnglish, categoriesEnglish, posterUrlEnglish };
 }
 
 async function atualizarRegistro(registro, atualizacoes) {
@@ -73,7 +100,8 @@ async function executar() {
   const registros = todos.filter((registro) => {
     const semTitulo = !registro.title_english;
     const semCategorias = !Array.isArray(registro.categories_english) || registro.categories_english.length === 0;
-    return semTitulo || semCategorias;
+    const semPoster = !registro.poster_url_english;
+    return semTitulo || semCategorias || semPoster;
   });
 
   if (registros.length === 0) {
@@ -92,7 +120,7 @@ async function executar() {
         throw new Error('Registro sem tmdb_id.');
       }
 
-      const { titleEnglish, categoriesEnglish } = await buscarDadosIngles(registro.tmdb_id);
+      const { titleEnglish, categoriesEnglish, posterUrlEnglish } = await buscarDadosIngles(registro.tmdb_id);
       const atualizacoes = {};
 
       if (!registro.title_english) {
@@ -106,6 +134,13 @@ async function executar() {
         atualizacoes.categories_english = categoriesEnglish;
       }
 
+      if (!registro.poster_url_english) {
+        if (!posterUrlEnglish) {
+          throw new Error('TMDB não retornou um pôster válido para a versão em inglês.');
+        }
+        atualizacoes.poster_url_english = posterUrlEnglish;
+      }
+
       if (Object.keys(atualizacoes).length === 0) {
         continue;
       }
@@ -116,6 +151,7 @@ async function executar() {
       const partes = [];
       if (atualizacoes.title_english) partes.push(`title_english=${atualizacoes.title_english}`);
       if (atualizacoes.categories_english) partes.push(`categories_english=[${atualizacoes.categories_english.join(', ')}]`);
+      if (atualizacoes.poster_url_english) partes.push('poster_url_english=OK');
 
       console.log(`OK ${registro.release_date}: ${partes.join(' | ')}`);
     } catch (erro) {
