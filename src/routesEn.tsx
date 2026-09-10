@@ -138,7 +138,7 @@ function CabecalhoPagina({ mostrarMarca = true }: { mostrarMarca?: boolean }) {
     <header className={`pagina-header${mostrarMarca ? '' : ' pagina-header-sem-marca'}`}>
       <BotaoSobreEn />
       {mostrarMarca && (
-        <a href={PREFIXO} className="pagina-marca pagina-marca-link" aria-label="Go to the Letreiro home page">
+        <a href="/" className="pagina-marca pagina-marca-link" aria-label="Return to Letreiro language selection">
           <span className="pagina-marca-icone">🎬</span>
           <span className="pagina-marca-nome">Letreiro</span>
         </a>
@@ -158,10 +158,10 @@ function CabecalhoPagina({ mostrarMarca = true }: { mostrarMarca?: boolean }) {
 
 function MarcaDestaque() {
   return (
-    <div className="pagina-marca pagina-marca-destaque" aria-label="Letreiro">
+    <a href="/" className="pagina-marca pagina-marca-destaque pagina-marca-link" aria-label="Return to Letreiro language selection">
       <span className="pagina-marca-icone">🎬</span>
       <span className="pagina-marca-nome">Letreiro</span>
-    </div>
+    </a>
   )
 }
 
@@ -339,7 +339,7 @@ function JogoRota({ data }: { data: Date }) {
     const marcaJogo = document.querySelector<HTMLElement>('.site-header-titulo')
     if (!marcaJogo) return
 
-    const abrirInicio = () => navegar(PREFIXO)
+    const abrirInicio = () => navegar('/')
     const abrirInicioTeclado = (evento: KeyboardEvent) => {
       if (evento.key === 'Enter' || evento.key === ' ') {
         evento.preventDefault()
@@ -348,7 +348,7 @@ function JogoRota({ data }: { data: Date }) {
     }
 
     marcaJogo.setAttribute('role', 'link')
-    marcaJogo.setAttribute('aria-label', 'Go to the Letreiro home page')
+    marcaJogo.setAttribute('aria-label', 'Return to Letreiro language selection')
     marcaJogo.tabIndex = 0
     marcaJogo.classList.add('marca-jogo-link')
     marcaJogo.addEventListener('click', abrirInicio)
