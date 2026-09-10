@@ -2,6 +2,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import Routes from './routes.tsx'
 import Privacy from './Privacy.tsx'
+import LandingHome from './LandingHome.tsx'
 import SiteFooter from './SiteFooter.tsx'
 import './GameRoutes.css'
 import './Tooltips.css'
@@ -24,7 +25,12 @@ if (!rootElement) {
 }
 
 const caminho = window.location.pathname.toLowerCase().replace(/\/$/, '') || '/'
-const conteudo = caminho === '/pt-br/privacidade' ? <Privacy /> : <Routes />
+const conteudo =
+  caminho === '/'
+    ? <LandingHome />
+    : caminho === '/pt-br/privacidade'
+      ? <Privacy />
+      : <Routes />
 
 createRoot(rootElement).render(
   <StrictMode>
